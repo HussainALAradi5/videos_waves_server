@@ -1,0 +1,18 @@
+const express = require('express')
+const router = express.Router()
+const userController = require('../controllers/users')
+const authService = require('../service/auth')
+const adminRequestController = require('../controllers/adminRequests')
+router.post('/register', userController.register)
+router.post('/login', userController.login)
+router.use(authService.authenticate)
+router.get('/details', userController.getUserDetails)
+
+router.put('/edit', userController.editProfile)
+router.delete('/delete', userController.deleteUser)
+router.post('/requests', adminRequestController.createRequest)
+router.get('/requests', adminRequestController.getRequests)
+router.get('/requests/:requestId', adminRequestController.getRequestById)
+router.put('/requests/:requestId', adminRequestController.updateRequest)
+router.delete('/requests/:requestId', adminRequestController.deleteRequest)
+module.exports = router
