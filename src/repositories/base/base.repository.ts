@@ -44,6 +44,21 @@ export abstract class BaseRepository<T extends BaseEntity> {
     return result.modifiedCount === 1
   }
 
+  /** Adds `amount` to a numeric counter; counters never drop below zero, even under concurrent decrements. */
+  async incrementCounter(id: string, counter: keyof T & string, amount: number): Promise<void> {
+    const guard = amount < 0 ? { [counter]: { $gte: -amount } } : {}
+    await this.model.updateOne({ _id: toObjectId(id), ...guard } as QueryFilter<T>, {
+      $inc: { [counter]: amount }
+    } as UpdateQuery<T>)
+  }
+
+  async restoreById(id: string, actorId: string | null): Promise<boolean> {
+    const result = await this.model.updateOne({ _id: toObjectId(id), deletedAt: { $ne: null } } as QueryFilter<T>, {
+      $set: { deletedAt: null, deletedBy: null, updatedBy: toOptionalObjectId(actorId) }
+    } as UpdateQuery<T>)
+    return result.modifiedCount === 1
+  }
+
   /** TResult describes the item shape after `options.populate` is applied. */
   async paginate<TResult = HydratedDocument<T>>(
     filter: QueryFilter<T>,

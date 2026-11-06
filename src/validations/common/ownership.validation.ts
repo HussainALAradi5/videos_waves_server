@@ -1,7 +1,7 @@
 import type { Types } from 'mongoose'
 import { Role } from '../../enums/users/roles/role.enum'
 import { MESSAGES } from '../../constants/common/messages.constants'
-import type { AuthUser } from '../../interfaces/auth/auth-user.interface'
+import type { AuthUser } from '../../interfaces/users/auth/auth-user.interface'
 import { forbidden } from '../../utilities/errors/app-error.utility'
 import { isSameId } from '../../utilities/ids/object-id.utility'
 

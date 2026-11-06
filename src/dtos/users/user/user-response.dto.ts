@@ -6,6 +6,10 @@ export interface UserResponseDto {
   userName: string
   email: string
   role: Role
-  image: string | null
+  avatarUrl: string | null
+  bio: string
+  followersCount: number
+  followingCount: number
+  videosCount: number
   createdAt: string
 }

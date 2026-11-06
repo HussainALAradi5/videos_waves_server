@@ -26,10 +26,22 @@ export const MESSAGES = {
   },
   VIDEOS: {
     NOT_FOUND: 'Video not found.',
-    FILE_REQUIRED: 'A video file is required.',
-    FILE_TYPE_INVALID: 'Only video files can be uploaded.',
-    FILE_TOO_LARGE: 'The video file is too large.',
     DELETED: 'Video deleted.'
+  },
+  MEDIA: {
+    NOT_FOUND: 'Media not found.',
+    FILE_NOT_UPLOADED: 'The uploaded file could not be found. Please upload it again.',
+    FILE_REQUIRED: 'A file is required.',
+    WRONG_FOLDER: 'This file was not uploaded for your account.',
+    WRONG_VISIBILITY: 'This file was uploaded with the wrong privacy setting.',
+    TYPE_NOT_ALLOWED: 'This file type is not allowed here.',
+    TOO_LARGE: 'The file is too large.',
+    ALREADY_USED: 'This file is already in use.',
+    WRONG_KIND: 'This file cannot be used here.',
+    UPLOAD_SIGNATURE_INVALID: 'The upload signature is invalid or has expired.',
+    LOCAL_PROVIDER_ONLY: 'Direct uploads to this server are disabled.',
+    DELIVERY_SIGNATURE_INVALID: 'This link is invalid or has expired.',
+    DELETED: 'Upload removed.'
   },
   COMMENTS: {
     NOT_FOUND: 'Comment not found.',

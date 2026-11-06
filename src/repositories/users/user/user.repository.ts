@@ -19,6 +19,10 @@ class UserRepository extends BaseRepository<User> {
     return this.model.findOne(this.active(filter)).select(SECRET_FIELDS)
   }
 
+  findByUserName(userName: string) {
+    return this.model.findOne(this.active({ userName }))
+  }
+
   findByIdWithSecrets(id: string) {
     return this.findById(id).select(SECRET_FIELDS)
   }

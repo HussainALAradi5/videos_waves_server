@@ -16,7 +16,12 @@ const userSchema = new Schema<User>({
   },
   passwordHash: { type: String, required: true, select: false },
   role: { type: String, enum: Object.values(Role), default: Role.USER, index: true },
-  image: { type: String, default: null, maxlength: USER_LIMITS.IMAGE_URL_MAX },
+  avatarUrl: { type: String, default: null, maxlength: USER_LIMITS.AVATAR_URL_MAX },
+  avatar: { type: Schema.Types.ObjectId, ref: 'Media', default: null },
+  bio: { type: String, default: '', trim: true, maxlength: USER_LIMITS.BIO_MAX },
+  followersCount: { type: Number, default: 0, min: 0 },
+  followingCount: { type: Number, default: 0, min: 0 },
+  videosCount: { type: Number, default: 0, min: 0 },
   tokenVersion: { type: Number, default: 0, select: false }
 })
 

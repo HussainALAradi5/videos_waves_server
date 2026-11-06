@@ -1,6 +1,6 @@
 import type { Request } from 'express'
 import { MESSAGES } from '../../constants/common/messages.constants'
-import type { AuthUser } from '../../interfaces/auth/auth-user.interface'
+import type { AuthUser } from '../../interfaces/users/auth/auth-user.interface'
 import { unauthorized } from '../errors/app-error.utility'
 
 // Typed readers for data that the validate middleware already parsed.

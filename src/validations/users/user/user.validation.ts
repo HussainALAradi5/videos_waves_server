@@ -9,4 +9,4 @@ export const emailSchema = z.email().trim().toLowerCase().max(USER_LIMITS.EMAIL_
 
 export const passwordSchema = z.string().regex(REGEX.PASSWORD, MESSAGES.USERS.PASSWORD_RULE)
 
-export const imageUrlSchema = z.url().max(USER_LIMITS.IMAGE_URL_MAX).nullable()
+export const bioSchema = z.string().trim().max(USER_LIMITS.BIO_MAX)

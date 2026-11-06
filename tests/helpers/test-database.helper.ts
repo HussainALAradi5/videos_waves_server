@@ -1,11 +1,11 @@
 import mongoose from 'mongoose'
-import { MongoMemoryServer } from 'mongodb-memory-server'
+import { MongoMemoryReplSet } from 'mongodb-memory-server'
 import { connectDatabase, disconnectDatabase } from '../../src/config/database/database.config'
 
-let mongo: MongoMemoryServer | null = null
+let mongo: MongoMemoryReplSet | null = null
 
 export const startTestDatabase = async (): Promise<void> => {
-  mongo = await MongoMemoryServer.create()
+  mongo = await MongoMemoryReplSet.create({ replSet: { count: 1 } })
   await connectDatabase(mongo.getUri('videos_waves_test'))
   await Promise.all(Object.values(mongoose.models).map((model) => model.syncIndexes()))
 }

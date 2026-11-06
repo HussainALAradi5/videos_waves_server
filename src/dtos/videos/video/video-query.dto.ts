@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import type { z } from 'zod'
 import { VIDEO_SORT_FIELDS } from '../../../constants/videos/video/video.constants'
 import { objectIdSchema } from '../../../validations/common/object-id.validation'
 import { buildPageRequestSchema, searchSchema } from '../../../validations/common/pagination.validation'

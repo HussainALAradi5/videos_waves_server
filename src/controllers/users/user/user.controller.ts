@@ -3,6 +3,7 @@ import { MESSAGES } from '../../../constants/common/messages.constants'
 import type { UpdateProfileDto } from '../../../dtos/users/user/update-profile.dto'
 import type { ChangePasswordDto } from '../../../dtos/users/user/change-password.dto'
 import type { UserQueryDto } from '../../../dtos/users/user/user-query.dto'
+import type { UpdateAvatarDto } from '../../../dtos/users/user/update-avatar.dto'
 import * as userService from '../../../services/users/user/user.service'
 import { sendPage, sendSuccess } from '../../../utilities/responses/response.utility'
 import { getBody, getQuery, requireUser } from '../../../utilities/requests/request.utility'
@@ -13,6 +14,10 @@ export const getMe = async (req: Request, res: Response): Promise<void> => {
 
 export const updateMe = async (req: Request, res: Response): Promise<void> => {
   sendSuccess(res, await userService.updateProfile(requireUser(req).id, getBody<UpdateProfileDto>(req)))
+}
+
+export const updateMyAvatar = async (req: Request, res: Response): Promise<void> => {
+  sendSuccess(res, await userService.updateAvatar(getBody<UpdateAvatarDto>(req), requireUser(req)))
 }
 
 export const changeMyPassword = async (req: Request, res: Response): Promise<void> => {

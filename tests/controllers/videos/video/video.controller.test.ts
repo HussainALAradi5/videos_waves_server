@@ -1,35 +1,28 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { clearTestDatabase, startTestDatabase, stopTestDatabase } from '../../../helpers/test-database.helper'
-import { api, bearer, registerAdmin, registerUser, uploadVideo } from '../../../helpers/api.helper'
+import { api, bearer, registerAdmin, registerUser, uploadMedia, uploadVideo } from '../../../helpers/api.helper'
 
 describe('video endpoints', () => {
   beforeAll(startTestDatabase)
   afterAll(stopTestDatabase)
   beforeEach(clearTestDatabase)
 
-  it('requires authentication to upload', async () => {
-    await api().post('/videos').field('title', 'x').expect(401)
+  it('requires authentication to publish', async () => {
+    await api().post('/videos').send({ title: 'x' }).expect(401)
   })
 
-  it('rejects files that are not videos', async () => {
-    const session = await registerUser('uploader')
-    const response = await api()
-      .post('/videos')
-      .set(...bearer(session))
-      .field('title', 'Not a video')
-      .attach('file', Buffer.from('hello'), { filename: 'notes.txt', contentType: 'text/plain' })
-      .expect(415)
-    expect(response.body.error.code).toBe('UNSUPPORTED_MEDIA_TYPE')
+  it('rejects media that belongs to someone else', async () => {
+    const owner = await registerUser('mediaowner')
+    const other = await registerUser('thief')
+    const media = await uploadMedia(owner)
+    await api().post('/videos').set(...bearer(other)).send({ mediaId: media.id, title: 'Stolen' }).expect(400)
   })
 
-  it('rejects files over the size limit with 413', async () => {
-    const session = await registerUser('big')
-    await api()
-      .post('/videos')
-      .set(...bearer(session))
-      .field('title', 'Too big')
-      .attach('file', Buffer.alloc(2 * 1024 * 1024), { filename: 'big.mp4', contentType: 'video/mp4' })
-      .expect(413)
+  it('never publishes the same media twice', async () => {
+    const session = await registerUser('twice')
+    const media = await uploadMedia(session)
+    await api().post('/videos').set(...bearer(session)).send({ mediaId: media.id, title: 'One' }).expect(201)
+    await api().post('/videos').set(...bearer(session)).send({ mediaId: media.id, title: 'Two' }).expect(400)
   })
 
   it('uploads, lists with page metadata, and streams the file', async () => {

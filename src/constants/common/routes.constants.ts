@@ -1,6 +1,13 @@
 export const ROUTES = {
   HEALTH: '/health',
-  MEDIA_VIDEOS: '/media/videos',
+  MEDIA: {
+    BASE: '/media',
+    ROOT: '/',
+    SIGNATURE: '/signature',
+    BY_ID: '/:mediaId',
+    LOCAL_UPLOAD: '/local-upload',
+    LOCAL_FILES: '/files'
+  },
   AUTH: {
     BASE: '/auth',
     REGISTER: '/register',
@@ -12,7 +19,8 @@ export const ROUTES = {
     BASE: '/users',
     ROOT: '/',
     ME: '/me',
-    ME_PASSWORD: '/me/password'
+    ME_PASSWORD: '/me/password',
+    ME_AVATAR: '/me/avatar'
   },
   VIDEOS: {
     BASE: '/videos',

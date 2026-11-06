@@ -13,6 +13,14 @@ import { comparePassword, hashPassword } from '../../../utilities/security/passw
 import { badRequest, notFound } from '../../../utilities/errors/app-error.utility'
 import { escapeRegex } from '../../../utilities/strings/escape-regex.utility'
 import { assertIdentityAvailable, buildAuthResponse } from '../auth/auth.service'
+import type { UpdateAvatarDto } from '../../../dtos/users/user/update-avatar.dto'
+import type { AuthUser } from '../../../interfaces/users/auth/auth-user.interface'
+import { MediaKind } from '../../../enums/media/media/media-kind.enum'
+import { toMediaResponse } from '../../../mappers/media/media/media.mapper'
+import { withTransaction } from '../../../utilities/database/transaction.utility'
+import { toObjectId } from '../../../utilities/ids/object-id.utility'
+import { claimMedia, releaseMedia } from '../../media/media/media.service'
+import { purgeProviderFiles } from '../../media/media/media-cleanup.service'
 
 const findUserOrFail = async (userId: string) => {
   const user = await userRepository.findById(userId)
@@ -27,6 +35,21 @@ export const updateProfile = async (userId: string, dto: UpdateProfileDto): Prom
   await assertIdentityAvailable(dto, userId)
   const user = await userRepository.updateById(userId, { $set: dto }, userId)
   if (!user) throw notFound(MESSAGES.USERS.NOT_FOUND)
+  return toUserResponse(user)
+}
+
+/** Sets (or with `mediaId: null`, removes) the avatar; the previous avatar file is deleted after commit. */
+export const updateAvatar = async (dto: UpdateAvatarDto, actor: AuthUser): Promise<UserResponseDto> => {
+  const current = await findUserOrFail(actor.id)
+  const previousMediaId = current.avatar?.toString() ?? null
+  const user = await withTransaction(async () => {
+    const [media] = dto.mediaId ? await claimMedia([dto.mediaId], MediaKind.AVATAR, actor) : []
+    if (previousMediaId) await releaseMedia([previousMediaId], actor.id)
+    const avatar = media ? { avatar: toObjectId(media._id.toString()), avatarUrl: toMediaResponse(media).url } : null
+    return userRepository.updateById(actor.id, { $set: avatar ?? { avatar: null, avatarUrl: null } }, actor.id)
+  })
+  if (!user) throw notFound(MESSAGES.USERS.NOT_FOUND)
+  if (previousMediaId) await purgeProviderFiles([previousMediaId])
   return toUserResponse(user)
 }
 

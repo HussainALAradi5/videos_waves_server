@@ -7,7 +7,6 @@ import { videoQuerySchema } from '../../../dtos/videos/video/video-query.dto'
 import { videoParamsSchema } from '../../../dtos/videos/video/video-params.dto'
 import { authenticate, optionalAuthenticate } from '../../../middlewares/auth/authenticate.middleware'
 import { validate } from '../../../middlewares/request/validate.middleware'
-import { videoUpload } from '../../../middlewares/uploads/video-upload.middleware'
 
 const { ROOT, BY_ID, VIEWS, LIKE } = ROUTES.VIDEOS
 const byId = validate({ params: videoParamsSchema })
@@ -15,7 +14,7 @@ const byId = validate({ params: videoParamsSchema })
 export const videoRoutes = Router()
 
 videoRoutes.get(ROOT, optionalAuthenticate, validate({ query: videoQuerySchema }), videoController.listVideos)
-videoRoutes.post(ROOT, authenticate, videoUpload, validate({ body: createVideoSchema }), videoController.uploadVideo)
+videoRoutes.post(ROOT, authenticate, validate({ body: createVideoSchema }), videoController.createVideo)
 videoRoutes.get(BY_ID, optionalAuthenticate, byId, videoController.getVideo)
 videoRoutes.patch(
   BY_ID,

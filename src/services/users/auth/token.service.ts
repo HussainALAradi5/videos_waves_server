@@ -1,8 +1,8 @@
 import jwt from 'jsonwebtoken'
 import { jwtConfig } from '../../../config/auth/jwt.config'
 import { TokenType } from '../../../enums/users/auth/token-type.enum'
-import type { TokenPayload } from '../../../interfaces/auth/token-payload.interface'
-import type { TokenSubject } from '../../../interfaces/auth/token-subject.interface'
+import type { TokenPayload } from '../../../interfaces/users/auth/token-payload.interface'
+import type { TokenSubject } from '../../../interfaces/users/auth/token-subject.interface'
 import type { AuthTokensDto } from '../../../dtos/users/auth/auth-response.dto'
 
 const secretFor = (type: TokenType): string =>

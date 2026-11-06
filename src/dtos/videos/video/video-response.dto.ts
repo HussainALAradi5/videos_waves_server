@@ -6,7 +6,9 @@ export interface VideoResponseDto {
   title: string
   description: string
   videoUrl: string
+  thumbnailUrl: string | null
   mimeType: string
+  durationSeconds: number | null
   owner: PublicUserResponseDto
   likesCount: number
   commentsCount: number
