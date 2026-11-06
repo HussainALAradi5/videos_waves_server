@@ -45,6 +45,31 @@ describe('auth endpoints', () => {
     expect(response.body.error.code).toBe('UNAUTHORIZED')
   })
 
+  it('logs in with a mobile number in any common format', async () => {
+    await api()
+      .post('/auth/register')
+      .send({ userName: 'caller', email: 'caller@example.com', phone: '+973 3300 1122', password: VALID_PASSWORD, gender: 'male' })
+      .expect(201)
+    await api().post('/auth/login').send({ identifier: '+97333001122', password: VALID_PASSWORD }).expect(200)
+    await api().post('/auth/login').send({ identifier: '00973 3300-1122', password: VALID_PASSWORD }).expect(200)
+    await api().post('/auth/login').send({ identifier: '+97333001122', password: 'Wrong12345' }).expect(401)
+  })
+
+  it('rejects a username, email, or mobile number that is already taken', async () => {
+    await api()
+      .post('/auth/register')
+      .send({ userName: 'original', email: 'original@example.com', phone: '+97333004455', password: VALID_PASSWORD, gender: 'female' })
+      .expect(201)
+    const taken = [
+      { userName: 'original', email: 'other1@example.com' },
+      { userName: 'other2', email: 'ORIGINAL@example.com' },
+      { userName: 'other3', email: 'other3@example.com', phone: '+973 3300 4455' }
+    ]
+    for (const fields of taken) {
+      await api().post('/auth/register').send({ ...fields, password: VALID_PASSWORD, gender: 'male' }).expect(409)
+    }
+  })
+
   it('requires a gender at registration', async () => {
     await api().post('/auth/register').send({ userName: 'nogender', email: 'n@example.com', password: VALID_PASSWORD }).expect(400)
   })

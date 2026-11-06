@@ -4,6 +4,7 @@ import type { User } from '../../../interfaces/models/users/user/user.interface'
 import { BaseRepository } from '../../base/base.repository'
 import { toObjectId, toOptionalObjectId } from '../../../utilities/ids/object-id.utility'
 import { USER_PUBLIC_FIELDS } from '../../../constants/users/user/user.constants'
+import { isPhone, normalizePhone } from '../../../utilities/users/contact.utility'
 
 const SECRET_FIELDS = '+passwordHash +tokenVersion'
 
@@ -12,11 +13,17 @@ class UserRepository extends BaseRepository<User> {
     super(UserModel)
   }
 
+  /**
+   * Sign-in by email (has `@`), mobile number (any common format, stored as E.164), or username.
+   * A phone-shaped value also matches a username, since an all-digit username is allowed.
+   */
   findByLogin(identifier: string) {
     const normalized = identifier.trim()
     const filter: QueryFilter<User> = normalized.includes('@')
       ? { email: normalized.toLowerCase() }
-      : { userName: normalized }
+      : isPhone(normalized)
+        ? { $or: [{ phone: normalizePhone(normalized) }, { userName: normalized }] }
+        : { userName: normalized }
     return this.model.findOne(this.active(filter)).select(SECRET_FIELDS)
   }
 
