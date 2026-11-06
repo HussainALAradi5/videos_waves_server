@@ -32,6 +32,7 @@ export const getProfile = async (userName: string, viewerId?: string, viewerRole
     videosCount: user.videosCount,
     createdAt: user.createdAt.toISOString(),
     isMe,
+    role: user.role,
     isActive: user.deactivatedAt === null,
     ...relation
   }
