@@ -11,7 +11,10 @@ export const MESSAGES = {
     REFRESH_INVALID: 'The refresh token is invalid or has expired.',
     INVALID_CREDENTIALS: 'Invalid username, email, or password.',
     FORBIDDEN: 'You do not have permission to perform this action.',
-    LOGGED_OUT: 'You have been signed out.'
+    LOGGED_OUT: 'You have been signed out.',
+    LOGGED_OUT_EVERYWHERE: 'You have been signed out on every device.',
+    REFRESH_REUSED: 'This session was signed out for your security. Please sign in again.',
+    SESSION_NOT_FOUND: 'Session not found.'
   },
   USERS: {
     NOT_FOUND: 'User not found.',
@@ -59,6 +62,7 @@ export const MESSAGES = {
     VOICE_NOTE_ALONE: 'A voice note is sent on its own.',
     CANNOT_MESSAGE_SELF: 'You cannot message yourself.',
     CANNOT_MESSAGE_USER: 'You cannot message this account.',
+    MESSAGES_FOLLOWING_ONLY: 'This account only accepts messages from people it follows.',
     GROUP_ONLY: 'This works only in group chats.',
     ADMIN_REQUIRED: 'Only group admins can do this.',
     LAST_ADMIN: 'Make someone else an admin before stepping down.',

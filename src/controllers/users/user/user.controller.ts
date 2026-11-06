@@ -6,7 +6,7 @@ import type { UserQueryDto } from '../../../dtos/users/user/user-query.dto'
 import type { UpdateAvatarDto } from '../../../dtos/users/user/update-avatar.dto'
 import * as userService from '../../../services/users/user/user.service'
 import { sendPage, sendSuccess } from '../../../utilities/responses/response.utility'
-import { getBody, getQuery, requireUser } from '../../../utilities/requests/request.utility'
+import { getBody, getQuery, requireUser, userAgentOf } from '../../../utilities/requests/request.utility'
 
 export const getMe = async (req: Request, res: Response): Promise<void> => {
   sendSuccess(res, await userService.getProfile(requireUser(req).id))
@@ -21,7 +21,7 @@ export const updateMyAvatar = async (req: Request, res: Response): Promise<void>
 }
 
 export const changeMyPassword = async (req: Request, res: Response): Promise<void> => {
-  sendSuccess(res, await userService.changePassword(requireUser(req).id, getBody<ChangePasswordDto>(req)))
+  sendSuccess(res, await userService.changePassword(requireUser(req).id, getBody<ChangePasswordDto>(req), userAgentOf(req)))
 }
 
 export const deactivateMe = async (req: Request, res: Response): Promise<void> => {

@@ -31,7 +31,7 @@ describe('social endpoints', () => {
   it('refuses to follow yourself and reserves route names', async () => {
     const solo = await registerUser('solo')
     await api().put('/users/solo/follow').set(...bearer(solo)).expect(400)
-    await api().post('/auth/register').send({ userName: 'search', email: 's@example.com', password: 'Password123' }).expect(400)
+    await api().post('/auth/register').send({ userName: 'search', email: 's@example.com', password: 'Password123', gender: 'male' }).expect(400)
   })
 
   it('shows only followed people in the following feed', async () => {

@@ -24,6 +24,7 @@ import { buildDirectKey } from '../../../utilities/chat/conversation.utility'
 import { MUTED_FOREVER } from '../../../constants/chat/conversation/conversation.constants'
 import { intersectAll } from '../../../utilities/collections/intersect.utility'
 import { isBlockedEitherWay } from '../../users/visibility/visibility.service'
+import { acceptsMessagesFrom, findUsersHiding } from '../../users/settings/settings.service'
 import { emitToUsers } from '../realtime/chat-events.service'
 import { broadcastConversationChange, broadcastMessages, postSystemMessage } from '../message/message-posting.service'
 import {
@@ -95,6 +96,7 @@ export const startDirect = async (dto: StartDirectDto, actor: AuthUser): Promise
     await conversationMemberRepository.updateById(mine._id.toString(), { $set: { hiddenAt: null } }, actor.id)
     return getConversation(existing._id.toString(), actor)
   }
+  if (!(await acceptsMessagesFrom(targetId, actor.id))) throw forbidden(MESSAGES.CHAT.MESSAGES_FOLLOWING_ONLY)
   const status = await resolveInviteStatus(actor.id, targetId)
   const conversation = await withTransaction(async () => {
     const created = await conversationRepository.create(
@@ -160,6 +162,9 @@ export const markConversationRead = async (conversationId: string, actor: AuthUs
   await findMembershipOrFail(conversationId, actor.id)
   const readAt = new Date()
   await conversationMemberRepository.markRead(conversationId, actor.id, readAt)
+  emitToUsers([actor.id], ChatEvent.CONVERSATION_UPDATED, { conversationId })
+  // With read receipts off, the chat is marked read for the reader but nobody is told.
+  if ((await findUsersHiding([actor.id], 'readReceipts')).size > 0) return
   const others = (await conversationMemberRepository.findActiveUserIds(conversationId)).filter((id) => id !== actor.id)
   const restricted = await restrictionRepository.findTargetIds(actor.id, others)
   emitToUsers(others.filter((id) => !restricted.has(id)), ChatEvent.CONVERSATION_READ, {
@@ -167,6 +172,5 @@ export const markConversationRead = async (conversationId: string, actor: AuthUs
     userId: actor.id,
     lastReadAt: readAt.toISOString()
   })
-  emitToUsers([actor.id], ChatEvent.CONVERSATION_UPDATED, { conversationId })
 }
 

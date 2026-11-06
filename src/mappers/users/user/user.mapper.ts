@@ -9,6 +9,7 @@ export const toUserResponse = (user: User): UserResponseDto => ({
   userName: user.userName,
   email: user.email,
   role: user.role,
+  gender: user.gender ?? null,
   avatarUrl: user.avatarUrl,
   bio: user.bio,
   followersCount: user.followersCount,
@@ -20,5 +21,6 @@ export const toUserResponse = (user: User): UserResponseDto => ({
 export const toPublicUser = (user: PublicUserSource): PublicUserResponseDto => ({
   id: user._id.toString(),
   userName: user.userName,
-  avatarUrl: user.avatarUrl
+  avatarUrl: user.avatarUrl,
+  gender: user.gender ?? null
 })

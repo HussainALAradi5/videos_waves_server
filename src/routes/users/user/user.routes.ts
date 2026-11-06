@@ -6,6 +6,8 @@ import * as profileController from '../../../controllers/users/profile/profile.c
 import * as followController from '../../../controllers/users/follow/follow.controller'
 import * as blockController from '../../../controllers/users/block/block.controller'
 import * as restrictionController from '../../../controllers/users/restriction/restriction.controller'
+import * as settingsController from '../../../controllers/users/settings/settings.controller'
+import { updateSettingsSchema } from '../../../dtos/users/settings/update-settings.dto'
 import { updateProfileSchema } from '../../../dtos/users/user/update-profile.dto'
 import { changePasswordSchema } from '../../../dtos/users/user/change-password.dto'
 import { updateAvatarSchema } from '../../../dtos/users/user/update-avatar.dto'
@@ -39,6 +41,8 @@ userRoutes.patch(
   validate({ body: changePasswordSchema }),
   userController.changeMyPassword
 )
+userRoutes.get(U.ME_SETTINGS, authenticate, settingsController.getMySettings)
+userRoutes.patch(U.ME_SETTINGS, authenticate, validate({ body: updateSettingsSchema }), settingsController.updateMySettings)
 userRoutes.get(U.ME_BLOCKED, authenticate, myRelationPage, blockController.listBlockedUsers)
 userRoutes.get(U.ME_RESTRICTED, authenticate, myRelationPage, restrictionController.listRestrictedUsers)
 

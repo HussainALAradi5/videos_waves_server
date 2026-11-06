@@ -19,3 +19,4 @@ const buildLimiter = (options: { windowMs: number; limit: number }) =>
 export const generalRateLimit = buildLimiter(rateLimitConfig.general)
 export const authRateLimit = buildLimiter(rateLimitConfig.auth)
 export const uploadRateLimit = buildLimiter(rateLimitConfig.upload)
+export const refreshRateLimit = buildLimiter(rateLimitConfig.refresh)

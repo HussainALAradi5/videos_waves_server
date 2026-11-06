@@ -4,4 +4,5 @@ export interface TokenSubject {
   id: string
   role: Role
   tokenVersion: number
+  sessionId: string
 }

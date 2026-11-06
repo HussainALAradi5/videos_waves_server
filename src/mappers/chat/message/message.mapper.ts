@@ -18,7 +18,7 @@ export const previewOf = (message: Message): string =>
   })
 
 const userOrPlaceholder = (relations: MessageRelations, id: string) =>
-  toPublicUser(relations.users.get(id) ?? { _id: toObjectId(id), userName: DELETED_USER_NAME, avatarUrl: null })
+  toPublicUser(relations.users.get(id) ?? { _id: toObjectId(id), userName: DELETED_USER_NAME, avatarUrl: null, gender: null })
 
 export const toMessageResponse = (message: Message, relations: MessageRelations): MessageResponseDto => {
   const isUnsent = message.unsentAt !== null

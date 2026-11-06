@@ -13,6 +13,7 @@ import { comparePassword, hashPassword } from '../../../utilities/security/passw
 import { badRequest, notFound } from '../../../utilities/errors/app-error.utility'
 import { escapeRegex } from '../../../utilities/strings/escape-regex.utility'
 import { assertIdentityAvailable, buildAuthResponse } from '../auth/auth.service'
+import { revokeAllSessions } from '../auth/session.service'
 import type { UpdateAvatarDto } from '../../../dtos/users/user/update-avatar.dto'
 import type { AuthUser } from '../../../interfaces/users/auth/auth-user.interface'
 import { MediaKind } from '../../../enums/media/media/media-kind.enum'
@@ -58,24 +59,30 @@ export const updateAvatar = async (dto: UpdateAvatarDto, actor: AuthUser): Promi
   return toUserResponse(user)
 }
 
-/** Changes the password, revokes older sessions, and returns a fresh session for this device. */
-export const changePassword = async (userId: string, dto: ChangePasswordDto): Promise<AuthResponseDto> => {
+/** Changes the password, signs every device out, and returns a fresh session for this one. */
+export const changePassword = async (
+  userId: string,
+  dto: ChangePasswordDto,
+  userAgent: string
+): Promise<AuthResponseDto> => {
   const user = await userRepository.findByIdWithSecrets(userId)
   if (!user) throw notFound(MESSAGES.USERS.NOT_FOUND)
   if (!(await comparePassword(dto.currentPassword, user.passwordHash))) {
     throw badRequest(MESSAGES.USERS.CURRENT_PASSWORD_INCORRECT)
   }
   user.passwordHash = await hashPassword(dto.newPassword)
-  user.tokenVersion += 1
   user.updatedBy = user._id
   await user.save()
-  return buildAuthResponse(user)
+  await revokeAllSessions(userId)
+  const refreshed = await userRepository.findByIdWithSecrets(userId)
+  if (!refreshed) throw notFound(MESSAGES.USERS.NOT_FOUND)
+  return buildAuthResponse(refreshed, userAgent)
 }
 
 export const deactivateAccount = async (userId: string): Promise<void> => {
   const isDeleted = await userRepository.softDeleteById(userId, userId)
   if (!isDeleted) throw notFound(MESSAGES.USERS.NOT_FOUND)
-  await userRepository.incrementTokenVersion(userId)
+  await revokeAllSessions(userId)
 }
 
 /** Public people search; users hidden from the viewer by a block never appear. */

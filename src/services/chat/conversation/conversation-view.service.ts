@@ -7,6 +7,7 @@ import { userRepository } from '../../../repositories/users/user/user.repository
 import { toChatMember, toConversationResponse } from '../../../mappers/chat/conversation/conversation.mapper'
 import { isOnline } from '../realtime/presence.service'
 import { groupBy } from '../../../utilities/collections/group-by.utility'
+import { findUsersHiding } from '../../users/settings/settings.service'
 
 /**
  * Builds responses for a set of the viewer's memberships with a fixed number of queries
@@ -24,9 +25,11 @@ export const buildConversationViews = async (
   ])
   const others = members.filter((member) => member.user.toString() !== viewerId)
   const otherIds = [...new Set(others.map((member) => member.user.toString()))]
-  const [users, restrictingViewer] = await Promise.all([
+  const [users, restrictingViewer, hidingActivity, hidingReads] = await Promise.all([
     userRepository.findPublicByIds(otherIds),
-    restrictionRepository.findSourceIds(viewerId, otherIds)
+    restrictionRepository.findSourceIds(viewerId, otherIds),
+    findUsersHiding(otherIds, 'showActivityStatus'),
+    findUsersHiding(otherIds, 'readReceipts')
   ])
   const usersById = new Map(users.map((user) => [user._id.toString(), user]))
   const conversationsById = new Map(conversations.map((conversation) => [conversation._id.toString(), conversation]))
@@ -38,7 +41,15 @@ export const buildConversationViews = async (
     const chatMembers = (othersByConversation.get(conversation._id.toString()) ?? []).flatMap((member) => {
       const userId = member.user.toString()
       const user = usersById.get(userId)
-      return user ? [toChatMember(member, user, restrictingViewer.has(userId), isOnline(userId))] : []
+      if (!user) return []
+      const isRestricting = restrictingViewer.has(userId)
+      return [
+        toChatMember(member, user, {
+          hidesReads: isRestricting || hidingReads.has(userId),
+          hidesActivity: isRestricting || hidingActivity.has(userId),
+          isOnline: isOnline(userId)
+        })
+      ]
     })
     return [toConversationResponse(conversation, me, chatMembers)]
   })

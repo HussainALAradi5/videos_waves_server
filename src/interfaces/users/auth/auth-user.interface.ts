@@ -4,4 +4,6 @@ import type { Role } from '../../../enums/users/roles/role.enum'
 export interface AuthUser {
   id: string
   role: Role
+  /** The device session the request came from (sign out of this device only). */
+  sessionId: string
 }

@@ -13,7 +13,10 @@ export const ROUTES = {
     REGISTER: '/register',
     LOGIN: '/login',
     REFRESH: '/refresh',
-    LOGOUT: '/logout'
+    LOGOUT: '/logout',
+    LOGOUT_ALL: '/logout-all',
+    SESSIONS: '/sessions',
+    SESSION: '/sessions/:sessionId'
   },
   USERS: {
     BASE: '/users',
@@ -21,6 +24,7 @@ export const ROUTES = {
     ME: '/me',
     ME_PASSWORD: '/me/password',
     ME_AVATAR: '/me/avatar',
+    ME_SETTINGS: '/me/settings',
     ME_BLOCKED: '/me/blocked',
     ME_RESTRICTED: '/me/restricted',
     SEARCH: '/search',

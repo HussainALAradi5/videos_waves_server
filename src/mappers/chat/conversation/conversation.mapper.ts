@@ -5,20 +5,20 @@ import type { Conversation } from '../../../interfaces/models/chat/conversation/
 import type { ConversationMember } from '../../../interfaces/models/chat/conversation-member/conversation-member.interface'
 import type { PublicUserSource } from '../../../interfaces/models/users/user/public-user-source.interface'
 import { toPublicUser } from '../../users/user/user.mapper'
+import type { ChatMemberStatus } from '../../../interfaces/models/chat/conversation-member/chat-member-status.interface'
 
 type ConversationSource = Conversation | HydratedDocument<Conversation>
 
-/** `hidesStatus` is true for members who restricted the viewer: their read and online status stay private. */
+/** Read and online status stay private when the member restricted the viewer or turned them off in settings. */
 export const toChatMember = (
   member: ConversationMember,
   user: PublicUserSource,
-  hidesStatus: boolean,
-  isOnline: boolean
+  status: ChatMemberStatus
 ): ChatMemberResponseDto => ({
   user: toPublicUser(user),
   role: member.role,
-  lastReadAt: hidesStatus ? null : (member.lastReadAt?.toISOString() ?? null),
-  isOnline: hidesStatus ? null : isOnline
+  lastReadAt: status.hidesReads ? null : (member.lastReadAt?.toISOString() ?? null),
+  isOnline: status.hidesActivity ? null : status.isOnline
 })
 
 export const toConversationResponse = (

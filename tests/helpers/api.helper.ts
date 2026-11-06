@@ -17,7 +17,7 @@ export interface TestSession {
 export const registerUser = async (userName: string): Promise<TestSession> => {
   const response = await api()
     .post('/auth/register')
-    .send({ userName, email: `${userName}@example.com`, password: VALID_PASSWORD })
+    .send({ userName, email: `${userName}@example.com`, password: VALID_PASSWORD, gender: 'female' })
     .expect(201)
   const { accessToken, refreshToken, user } = response.body.data
   return { id: user.id, accessToken, refreshToken }

@@ -33,6 +33,7 @@ const migrateUsers = async (): Promise<void> => {
           role: user.isAdmin ? Role.ADMIN : Role.USER,
           avatarUrl: user.image ?? null,
           avatar: null,
+          gender: null,
           bio: '',
           tokenVersion: 0,
           followersCount: 0,

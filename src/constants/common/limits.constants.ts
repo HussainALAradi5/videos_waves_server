@@ -11,6 +11,7 @@ export const RATE_LIMITS = {
   WINDOW_MS: 15 * 60 * 1000,
   GENERAL_MAX: 1000,
   AUTH_MAX: 20,
+  REFRESH_MAX: 300,
   UPLOAD_MAX: 120
 } as const
 

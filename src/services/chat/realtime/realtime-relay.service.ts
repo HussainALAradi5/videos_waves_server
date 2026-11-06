@@ -5,6 +5,7 @@ import { conversationRepository } from '../../../repositories/chat/conversation/
 import { conversationMemberRepository } from '../../../repositories/chat/conversation-member/conversation-member.repository'
 import { restrictionRepository } from '../../../repositories/users/restriction/restriction.repository'
 import { emitToUsers } from './chat-events.service'
+import { findUsersHiding } from '../../users/settings/settings.service'
 
 /** Removes people `userId` restricted: they must not see that user's activity (typing, online, seen). */
 const withoutRestricted = async (userId: string, recipientIds: string[]): Promise<string[]> => {
@@ -21,6 +22,7 @@ export const relayTyping = async (userId: string, event: TypingEventDto): Promis
 
 /** Tells the user's direct-chat partners that they came online or went offline. */
 export const broadcastPresence = async (userId: string, isOnline: boolean): Promise<void> => {
+  if ((await findUsersHiding([userId], 'showActivityStatus')).size > 0) return
   const mine = await conversationMemberRepository.findConversationIdsForUser(userId)
   const direct = await conversationRepository.findIdsByType(mine, ConversationType.DIRECT)
   const members = await conversationMemberRepository.findActiveForConversations(direct)
