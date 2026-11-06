@@ -10,6 +10,7 @@ export const USER_EXPORT_COLUMNS = [
   'code',
   'userName',
   'email',
+  'phone',
   'role',
   'gender',
   'status',
@@ -22,5 +23,6 @@ export const USER_EXPORT_COLUMNS = [
 export const USER_IMPORT_SKIP_REASONS = {
   EMAIL_TAKEN: 'email already used',
   USER_NAME_TAKEN: 'username already used',
+  PHONE_TAKEN: 'phone number already used',
   DUPLICATE_IN_FILE: 'listed twice in this import'
 } as const

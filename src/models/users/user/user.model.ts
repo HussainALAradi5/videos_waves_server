@@ -15,6 +15,7 @@ const userSchema = new Schema<User>({
     trim: true,
     maxlength: USER_LIMITS.EMAIL_MAX
   },
+  phone: { type: String, default: null },
   passwordHash: { type: String, required: true, select: false },
   role: { type: String, enum: Object.values(Role), default: Role.USER, index: true },
   gender: { type: String, enum: [...Object.values(Gender), null], default: null },
@@ -31,5 +32,8 @@ const userSchema = new Schema<User>({
 
 userSchema.plugin(baseEntityPlugin, { codePrefix: USER_CODE_PREFIX })
 userSchema.index({ followersCount: -1 })
+
+// Unique only among accounts that have one; most accounts have no phone.
+userSchema.index({ phone: 1 }, { unique: true, partialFilterExpression: { phone: { $type: 'string' } } })
 
 export const UserModel = model<User>('User', userSchema)

@@ -25,6 +25,7 @@ export const exportUsers = async (query: Omit<UserQueryDto, 'page' | 'pageSize'>
     user.code,
     user.userName,
     user.email,
+    user.phone ?? '',
     user.role,
     user.gender ?? '',
     user.deactivatedAt ? AccountStatus.INACTIVE : AccountStatus.ACTIVE,
@@ -56,6 +57,10 @@ export const importUsers = async (dto: ImportUsersDto, actor: AuthUser): Promise
       skip(USER_IMPORT_SKIP_REASONS.EMAIL_TAKEN)
       continue
     }
+    if (row.phone && (await userRepository.isPhoneTaken(row.phone))) {
+      skip(USER_IMPORT_SKIP_REASONS.PHONE_TAKEN)
+      continue
+    }
     if (await userRepository.isUserNameTaken(row.userName)) {
       skip(USER_IMPORT_SKIP_REASONS.USER_NAME_TAKEN)
       continue
@@ -66,6 +71,7 @@ export const importUsers = async (dto: ImportUsersDto, actor: AuthUser): Promise
         _id: new Types.ObjectId(),
         userName: row.userName,
         email: row.email.toLowerCase(),
+        phone: row.phone ?? null,
         gender: row.gender,
         role: row.role,
         passwordHash: await hashPassword(password)

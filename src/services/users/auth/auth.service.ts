@@ -17,7 +17,7 @@ export const buildAuthResponse = async (user: User, userAgent: string): Promise<
 })
 
 export const assertIdentityAvailable = async (
-  identity: { email?: string; userName?: string },
+  identity: { email?: string; userName?: string; phone?: string | null },
   exceptId?: string
 ): Promise<void> => {
   if (identity.email && (await userRepository.isEmailTaken(identity.email, exceptId))) {
@@ -25,6 +25,9 @@ export const assertIdentityAvailable = async (
   }
   if (identity.userName && (await userRepository.isUserNameTaken(identity.userName, exceptId))) {
     throw conflict(MESSAGES.USERS.USER_NAME_TAKEN)
+  }
+  if (identity.phone && (await userRepository.isPhoneTaken(identity.phone, exceptId))) {
+    throw conflict(MESSAGES.USERS.PHONE_TAKEN)
   }
 }
 
@@ -37,6 +40,7 @@ export const register = async (dto: RegisterDto, userAgent: string): Promise<Aut
       _id: id,
       userName: dto.userName,
       email: dto.email,
+      phone: dto.phone ?? null,
       gender: dto.gender,
       passwordHash: await hashPassword(dto.password)
     },

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { normalizePhone } from '../../../utilities/users/contact.utility'
 import { Gender } from '../../../enums/users/user/gender.enum'
 import { REGEX } from '../../../constants/common/regex.constants'
 import { MESSAGES } from '../../../constants/common/messages.constants'
@@ -17,5 +18,12 @@ export const emailSchema = z.email().trim().toLowerCase().max(USER_LIMITS.EMAIL_
 export const passwordSchema = z.string().regex(REGEX.PASSWORD, MESSAGES.USERS.PASSWORD_RULE)
 
 export const genderSchema = z.enum(Gender)
+
+/** Optional and private: stored normalised to E.164, used only for exact-match people search. */
+export const phoneSchema = z
+  .string()
+  .trim()
+  .transform(normalizePhone)
+  .refine((value) => REGEX.PHONE.test(value), MESSAGES.USERS.PHONE_RULE)
 
 export const bioSchema = z.string().trim().max(USER_LIMITS.BIO_MAX)

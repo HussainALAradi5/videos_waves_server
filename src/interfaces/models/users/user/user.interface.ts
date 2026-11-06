@@ -6,6 +6,8 @@ import type { BaseEntity } from '../../base/base-entity.interface'
 export interface User extends BaseEntity {
   userName: string
   email: string
+  /** Private, E.164; only for exact-match people search. */
+  phone: string | null
   passwordHash: string
   role: Role
   /** null for accounts created before gender was asked (they get the neutral avatar). */

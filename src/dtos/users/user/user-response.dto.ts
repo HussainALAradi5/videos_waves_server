@@ -5,6 +5,7 @@ import type { Gender } from '../../../enums/users/user/gender.enum'
 export interface UserResponseDto extends BaseEntityResponseDto {
   userName: string
   email: string
+  phone: string | null
   role: Role
   gender: Gender | null
   avatarUrl: string | null

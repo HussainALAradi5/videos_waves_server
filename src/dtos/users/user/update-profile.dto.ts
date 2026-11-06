@@ -1,10 +1,12 @@
 import { z } from 'zod'
-import { bioSchema, emailSchema, genderSchema, newUserNameSchema } from '../../../validations/users/user/user.validation'
+import { bioSchema, emailSchema, genderSchema, newUserNameSchema, phoneSchema } from '../../../validations/users/user/user.validation'
 
 export const updateProfileSchema = z
   .object({
     userName: newUserNameSchema.optional(),
     email: emailSchema.optional(),
+    /** `null` removes the number. */
+    phone: phoneSchema.nullable().optional(),
     bio: bioSchema.optional(),
     gender: genderSchema.optional()
   })
