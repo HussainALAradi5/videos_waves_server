@@ -1,7 +1,7 @@
 import { Schema, model } from 'mongoose'
 import { BLOCK_CODE_PREFIX } from '../../../constants/users/block/block.constants'
 import type { Block } from '../../../interfaces/models/users/block/block.interface'
-import { baseEntityPlugin } from '../../base/base-entity.plugin'
+import { baseEntityPlugin } from '../../base/base-entity.model'
 
 const blockSchema = new Schema<Block>({
   blocker: { type: Schema.Types.ObjectId, ref: 'User', required: true },

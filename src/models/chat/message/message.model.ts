@@ -3,7 +3,7 @@ import { MESSAGE_CODE_PREFIX, MESSAGE_LIMITS } from '../../../constants/chat/mes
 import { MessageKind } from '../../../enums/chat/message/message-kind.enum'
 import { SystemAction } from '../../../enums/chat/message/system-action.enum'
 import type { Message } from '../../../interfaces/models/chat/message/message.interface'
-import { baseEntityPlugin } from '../../base/base-entity.plugin'
+import { baseEntityPlugin } from '../../base/base-entity.model'
 
 const messageSchema = new Schema<Message>({
   conversation: { type: Schema.Types.ObjectId, ref: 'Conversation', required: true },

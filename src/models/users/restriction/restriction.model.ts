@@ -1,7 +1,7 @@
 import { Schema, model } from 'mongoose'
 import { RESTRICTION_CODE_PREFIX } from '../../../constants/users/restriction/restriction.constants'
 import type { Restriction } from '../../../interfaces/models/users/restriction/restriction.interface'
-import { baseEntityPlugin } from '../../base/base-entity.plugin'
+import { baseEntityPlugin } from '../../base/base-entity.model'
 
 const restrictionSchema = new Schema<Restriction>({
   restricter: { type: Schema.Types.ObjectId, ref: 'User', required: true },

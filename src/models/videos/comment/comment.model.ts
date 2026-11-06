@@ -2,7 +2,7 @@ import { Schema, model } from 'mongoose'
 import { COMMENT_CODE_PREFIX, COMMENT_LIMITS } from '../../../constants/videos/comment/comment.constants'
 import { CommentVisibility } from '../../../enums/videos/comment/comment-visibility.enum'
 import type { Comment } from '../../../interfaces/models/videos/comment/comment.interface'
-import { baseEntityPlugin } from '../../base/base-entity.plugin'
+import { baseEntityPlugin } from '../../base/base-entity.model'
 
 const commentSchema = new Schema<Comment>({
   video: { type: Schema.Types.ObjectId, ref: 'Video', required: true },

@@ -3,7 +3,7 @@ import { CONVERSATION_CODE_PREFIX, CONVERSATION_LIMITS } from '../../../constant
 import { ConversationType } from '../../../enums/chat/conversation/conversation-type.enum'
 import { MessageKind } from '../../../enums/chat/message/message-kind.enum'
 import type { Conversation } from '../../../interfaces/models/chat/conversation/conversation.interface'
-import { baseEntityPlugin } from '../../base/base-entity.plugin'
+import { baseEntityPlugin } from '../../base/base-entity.model'
 
 const lastMessageSchema = new Schema(
   {

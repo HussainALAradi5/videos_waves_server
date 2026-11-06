@@ -1,7 +1,7 @@
 import { Schema, model } from 'mongoose'
 import { MESSAGE_REACTION_CODE_PREFIX, MESSAGE_REACTIONS } from '../../../constants/chat/message/message.constants'
 import type { MessageReaction } from '../../../interfaces/models/chat/message-reaction/message-reaction.interface'
-import { baseEntityPlugin } from '../../base/base-entity.plugin'
+import { baseEntityPlugin } from '../../base/base-entity.model'
 
 const reactionSchema = new Schema<MessageReaction>({
   message: { type: Schema.Types.ObjectId, ref: 'Message', required: true },

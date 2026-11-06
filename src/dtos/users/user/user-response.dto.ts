@@ -1,8 +1,7 @@
+import type { BaseEntityResponseDto } from '../../common/base/base-entity-response.dto'
 import type { Role } from '../../../enums/users/roles/role.enum'
 
-export interface UserResponseDto {
-  id: string
-  code: string
+export interface UserResponseDto extends BaseEntityResponseDto {
   userName: string
   email: string
   role: Role
@@ -11,5 +10,4 @@ export interface UserResponseDto {
   followersCount: number
   followingCount: number
   videosCount: number
-  createdAt: string
 }

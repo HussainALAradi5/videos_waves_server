@@ -3,7 +3,7 @@ import { CONVERSATION_MEMBER_CODE_PREFIX } from '../../../constants/chat/convers
 import { MemberRole } from '../../../enums/chat/conversation/member-role.enum'
 import { MemberStatus } from '../../../enums/chat/conversation/member-status.enum'
 import type { ConversationMember } from '../../../interfaces/models/chat/conversation-member/conversation-member.interface'
-import { baseEntityPlugin } from '../../base/base-entity.plugin'
+import { baseEntityPlugin } from '../../base/base-entity.model'
 
 const memberSchema = new Schema<ConversationMember>({
   conversation: { type: Schema.Types.ObjectId, ref: 'Conversation', required: true },

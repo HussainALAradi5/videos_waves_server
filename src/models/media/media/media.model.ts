@@ -5,7 +5,7 @@ import { MediaProvider } from '../../../enums/media/media/media-provider.enum'
 import { MediaStatus } from '../../../enums/media/media/media-status.enum'
 import { MediaVisibility } from '../../../enums/media/media/media-visibility.enum'
 import type { Media } from '../../../interfaces/models/media/media/media.interface'
-import { baseEntityPlugin } from '../../base/base-entity.plugin'
+import { baseEntityPlugin } from '../../base/base-entity.model'
 
 const mediaSchema = new Schema<Media>({
   kind: { type: String, enum: Object.values(MediaKind), required: true },

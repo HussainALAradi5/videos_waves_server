@@ -5,7 +5,7 @@ import {
   ADMIN_REQUEST_LIMITS
 } from '../../../constants/users/admin-request/admin-request.constants'
 import type { AdminRequest } from '../../../interfaces/models/users/admin-request/admin-request.interface'
-import { baseEntityPlugin } from '../../base/base-entity.plugin'
+import { baseEntityPlugin } from '../../base/base-entity.model'
 
 const adminRequestSchema = new Schema<AdminRequest>({
   requester: { type: Schema.Types.ObjectId, ref: 'User', required: true },

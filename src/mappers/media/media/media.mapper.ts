@@ -22,6 +22,7 @@ export const toMediaResponse = (media: Media): MediaResponseDto => {
     width: media.width,
     height: media.height,
     durationSeconds: media.durationSeconds,
-    originalName: media.originalName
+    originalName: media.originalName,
+    createdAt: media.createdAt.toISOString()
   }
 }

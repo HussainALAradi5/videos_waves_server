@@ -1,7 +1,7 @@
 import { Schema, model } from 'mongoose'
 import { FOLLOW_CODE_PREFIX } from '../../../constants/users/follow/follow.constants'
 import type { Follow } from '../../../interfaces/models/users/follow/follow.interface'
-import { baseEntityPlugin } from '../../base/base-entity.plugin'
+import { baseEntityPlugin } from '../../base/base-entity.model'
 
 const followSchema = new Schema<Follow>({
   follower: { type: Schema.Types.ObjectId, ref: 'User', required: true },

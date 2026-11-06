@@ -1,7 +1,7 @@
 import { Schema, model } from 'mongoose'
 import { VIDEO_CODE_PREFIX, VIDEO_LIMITS } from '../../../constants/videos/video/video.constants'
 import type { Video } from '../../../interfaces/models/videos/video/video.interface'
-import { baseEntityPlugin } from '../../base/base-entity.plugin'
+import { baseEntityPlugin } from '../../base/base-entity.model'
 
 const videoSchema = new Schema<Video>({
   title: { type: String, required: true, trim: true, maxlength: VIDEO_LIMITS.TITLE_MAX },

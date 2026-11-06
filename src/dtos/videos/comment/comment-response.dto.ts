@@ -1,8 +1,7 @@
+import type { BaseEntityResponseDto } from '../../common/base/base-entity-response.dto'
 import type { PublicUserResponseDto } from '../../users/user/public-user-response.dto'
 
-export interface CommentResponseDto {
-  id: string
-  code: string
+export interface CommentResponseDto extends BaseEntityResponseDto {
   videoId: string
   parentId: string | null
   content: string
@@ -13,6 +12,5 @@ export interface CommentResponseDto {
   /** Visible only to its author and the video owner until the owner approves it. */
   isPendingApproval: boolean
   repliesCount: number
-  createdAt: string
   updatedAt: string
 }

@@ -2,7 +2,7 @@ import { Schema, model } from 'mongoose'
 import { Role } from '../../../enums/users/roles/role.enum'
 import { USER_CODE_PREFIX, USER_LIMITS } from '../../../constants/users/user/user.constants'
 import type { User } from '../../../interfaces/models/users/user/user.interface'
-import { baseEntityPlugin } from '../../base/base-entity.plugin'
+import { baseEntityPlugin } from '../../base/base-entity.model'
 
 const userSchema = new Schema<User>({
   userName: { type: String, required: true, unique: true, trim: true },

@@ -1,8 +1,7 @@
+import type { BaseEntityResponseDto } from '../../common/base/base-entity-response.dto'
 import type { MediaKind } from '../../../enums/media/media/media-kind.enum'
 
-export interface MediaResponseDto {
-  id: string
-  code: string
+export interface MediaResponseDto extends BaseEntityResponseDto {
   kind: MediaKind
   /** Public CDN URL, or a signed URL that expires for private media. */
   url: string
