@@ -1,0 +1,42 @@
+# Render Blueprint for the API (https://render.com/docs/blueprint-spec).
+# Values marked `sync: false` are entered in the Render dashboard when the Blueprint is created.
+services:
+  - type: web
+    name: videos-waves-api
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: main
+    buildCommand: npm ci && npm run build
+    # Migrations and the idempotent demo seed run before each start, which also restores demo passwords.
+    startCommand: npm run migrate:prod && npm run seed:prod && npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 22
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        sync: false
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: MEDIA_PROVIDER
+        value: imagekit
+      - key: IMAGEKIT_PUBLIC_KEY
+        sync: false
+      - key: IMAGEKIT_PRIVATE_KEY
+        sync: false
+      - key: IMAGEKIT_URL_ENDPOINT
+        sync: false
+      - key: ALLOW_DEMO_SEED
+        value: "true"
+      - key: SEED_ADMIN_PASSWORD
+        sync: false
+      - key: SEED_USER_PASSWORD
+        sync: false

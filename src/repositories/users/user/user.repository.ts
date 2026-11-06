@@ -55,6 +55,12 @@ class UserRepository extends BaseRepository<User> {
     return this.isTaken({ userName }, exceptId)
   }
 
+  /** Includes deactivated accounts; the demo seed uses it to bring demo accounts back. */
+  async findIdByEmailIncludingDeleted(email: string): Promise<string | null> {
+    const user = await this.model.findOne({ email: email.toLowerCase() }, '_id').lean()
+    return user ? user._id.toString() : null
+  }
+
   async incrementTokenVersion(id: string): Promise<void> {
     await this.model.updateOne({ _id: toObjectId(id) }, { $inc: { tokenVersion: 1 } })
   }

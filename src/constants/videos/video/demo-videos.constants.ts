@@ -11,14 +11,14 @@ export const DEMO_VIDEOS = [
     mimeType: 'video/mp4'
   },
   {
-    ownerUserName: 'viewer',
+    ownerUserName: 'lina',
     title: 'Friday night lights',
     description: 'A short CC0 clip from the MDN interactive examples.',
     url: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/friday.mp4',
     mimeType: 'video/mp4'
   },
   {
-    ownerUserName: 'admin',
+    ownerUserName: 'omar',
     title: 'Big Buck Bunny (10 s)',
     description: '(c) Blender Foundation, www.bigbuckbunny.org, CC BY 3.0.',
     url: 'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4',
