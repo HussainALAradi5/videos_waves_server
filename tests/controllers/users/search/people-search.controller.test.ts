@@ -12,24 +12,23 @@ describe('people search', () => {
   afterAll(stopTestDatabase)
   beforeEach(clearTestDatabase)
 
-  it('finds someone only by their full email or phone number', async () => {
+  it('matches any part of a username, email, or phone number, ignoring case', async () => {
     const me = await registerUser('seeker')
     await api()
       .post('/auth/register')
-      .send({ userName: 'dana', email: 'dana@example.com', phone: '+973 3300-1122', password: VALID_PASSWORD, gender: 'female' })
+      .send({ userName: 'Dana_K', email: 'dana.k@mail.test', phone: '+973 3300-1122', password: VALID_PASSWORD, gender: 'female' })
       .expect(201)
+    await registerUser('omar')
 
-    expect(names(await search('dana@example.com', me))).toEqual(['dana'])
-    expect(names(await search('DANA@Example.com', me))).toEqual(['dana'])
-    expect(names(await search('+97333001122', me))).toEqual(['dana'])
-    expect(names(await search('00973 3300 1122', me))).toEqual(['dana'])
-
-    for (const partial of ['dana', 'dan', 'dana@example', '3300', 'example.com']) {
-      const response = await search(partial, me)
-      expect(response.body.data).toEqual([])
-      expect(response.body.meta.totalItems).toBe(0)
+    for (const text of ['dana', 'DAN', 'na_k', 'dana.k@MAIL', 'mail.test', '3300', '3300 1122', '+973', '97333001122']) {
+      expect(names(await search(text, me))).toEqual(['Dana_K'])
     }
-    expect(names(await search('nobody@example.com', me))).toEqual([])
+    // Both test helpers' accounts use example.com addresses, including the searcher's own.
+    expect(names(await search('EXAMPLE.com', me)).sort()).toEqual(['omar', 'seeker'])
+    expect(names(await search('zzz', me))).toEqual([])
+    const empty = await api().get('/users/search').set(...bearer(me)).expect(200)
+    expect(empty.body.meta.totalItems).toBe(0)
+    expect((await search('3300', me)).body.data[0].phone).toBeUndefined()
   })
 
   it('keeps phone numbers private, unique, and editable', async () => {

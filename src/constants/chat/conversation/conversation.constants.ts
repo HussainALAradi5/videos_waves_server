@@ -3,6 +3,11 @@ export const CONVERSATION_MEMBER_CODE_PREFIX = 'CMB'
 /** Stored as `mutedUntil` for "mute until I unmute". */
 export const MUTED_FOREVER = new Date('9999-12-31T00:00:00.000Z')
 
+const HOUR_MS = 60 * 60 * 1000
+
+/** Milliseconds each timed mute lasts; `always` uses MUTED_FOREVER and `off` clears it. */
+export const MUTE_DURATION_MS = { '8h': 8 * HOUR_MS, '1w': 7 * 24 * HOUR_MS } as const
+
 export const CONVERSATION_SORT_FIELDS = ['lastMessageAt', 'createdAt'] as const
 export const CONVERSATION_LIMITS = {
   TITLE_MIN: 1,

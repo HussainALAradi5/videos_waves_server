@@ -25,7 +25,7 @@ import { purgeProviderFiles } from '../../media/media/media-cleanup.service'
 import { USER_PUBLIC_FIELDS } from '../../../constants/users/user/user.constants'
 import type { UserSearchQueryDto } from '../../../dtos/users/user/user-search-query.dto'
 import type { UserSummaryResponseDto } from '../../../dtos/users/follow/user-summary-response.dto'
-import { parseContact } from '../../../utilities/users/contact.utility'
+import { buildPeopleMatch } from '../../../utilities/users/contact.utility'
 import { buildPageMeta } from '../../../utilities/pagination/paginate.utility'
 import { AccountStatus } from '../../../enums/users/user/account-status.enum'
 import { getHiddenUserIds } from '../visibility/visibility.service'
@@ -89,17 +89,18 @@ export const deactivateAccount = async (userId: string): Promise<void> => {
 }
 
 /**
- * People search (Search tab, new message, add to group): only a full email or phone number that an
- * account uses finds it, so nobody can browse the member list. Hidden users never appear.
+ * People search (Search tab, new message, add to group): any part of a username, email, or phone
+ * number, ignoring case. Phones match on their digits, so `555 0100` finds `+15550100004`; the phone
+ * itself is never returned. An empty box finds no one. Hidden and deactivated users never appear.
  */
 export const searchUsers = async (
   query: UserSearchQueryDto,
   viewerId?: string
 ): Promise<PageResult<UserSummaryResponseDto>> => {
-  const contact = query.search ? parseContact(query.search) : null
-  if (!contact) return { items: [], meta: buildPageMeta(query.page, query.pageSize, 0) }
+  const conditions = query.search ? buildPeopleMatch(query.search) : []
+  if (conditions.length === 0) return { items: [], meta: buildPageMeta(query.page, query.pageSize, 0) }
   const hidden = await getHiddenUserIds(viewerId)
-  const filter: QueryFilter<User> = { ...contact }
+  const filter: QueryFilter<User> = { $or: conditions }
   if (hidden.length > 0) filter._id = { $nin: hidden.map(toObjectId) }
   const page = await userRepository.paginate<User>(filter, query, { projection: USER_PUBLIC_FIELDS })
   return { items: await toUserSummaries(page.items, viewerId), meta: page.meta }

@@ -22,7 +22,7 @@ describe('video endpoints', () => {
     const session = await registerUser('twice')
     const media = await uploadMedia(session)
     await api().post('/videos').set(...bearer(session)).send({ mediaId: media.id, title: 'One' }).expect(201)
-    await api().post('/videos').set(...bearer(session)).send({ mediaId: media.id, title: 'Two' }).expect(400)
+    await api().post('/videos').set(...bearer(session)).send({ mediaId: media.id, title: 'Two' }).expect(409)
   })
 
   it('uploads, lists with page metadata, and streams the file', async () => {

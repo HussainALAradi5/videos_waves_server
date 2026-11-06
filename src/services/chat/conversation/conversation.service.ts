@@ -1,3 +1,4 @@
+import { MuteDuration } from '../../../enums/chat/conversation/mute-duration.enum'
 import type { QueryFilter } from 'mongoose'
 import { MESSAGES } from '../../../constants/common/messages.constants'
 import { ConversationType } from '../../../enums/chat/conversation/conversation-type.enum'
@@ -21,7 +22,7 @@ import { badRequest, conflict, forbidden, notFound } from '../../../utilities/er
 import { escapeRegex } from '../../../utilities/strings/escape-regex.utility'
 import { toObjectId } from '../../../utilities/ids/object-id.utility'
 import { buildDirectKey } from '../../../utilities/chat/conversation.utility'
-import { MUTED_FOREVER } from '../../../constants/chat/conversation/conversation.constants'
+import { MUTE_DURATION_MS, MUTED_FOREVER } from '../../../constants/chat/conversation/conversation.constants'
 import { intersectAll } from '../../../utilities/collections/intersect.utility'
 import { isBlockedEitherWay } from '../../users/visibility/visibility.service'
 import { acceptsMessagesFrom, findUsersHiding } from '../../users/settings/settings.service'
@@ -116,15 +117,23 @@ export const startDirect = async (dto: StartDirectDto, actor: AuthUser): Promise
   return getConversation(conversation._id.toString(), actor)
 }
 
-/** Rename (group admins) and mute (any member, for themselves only). */
+/** When a mute ends: a timed mute counts from now, `always` never ends, `off` clears it. */
+const muteUntil = (mute: MuteDuration): Date | null => {
+  if (mute === MuteDuration.OFF) return null
+  if (mute === MuteDuration.ALWAYS) return MUTED_FOREVER
+  return new Date(Date.now() + MUTE_DURATION_MS[mute])
+}
+
+/** Rename (group admins) and mute (any member, for themselves only: 8 hours, a week, or until unmuted). */
 export const updateConversation = async (
   conversationId: string,
   dto: UpdateConversationDto,
   actor: AuthUser
 ): Promise<ConversationResponseDto> => {
   const member = await findMembershipOrFail(conversationId, actor.id)
-  if (dto.isMuted !== undefined) {
-    await conversationMemberRepository.updateById(member._id.toString(), { $set: { mutedUntil: dto.isMuted ? MUTED_FOREVER : null } }, actor.id)
+  const mute = dto.mute ?? (dto.isMuted === undefined ? undefined : dto.isMuted ? MuteDuration.ALWAYS : MuteDuration.OFF)
+  if (mute !== undefined) {
+    await conversationMemberRepository.updateById(member._id.toString(), { $set: { mutedUntil: muteUntil(mute) } }, actor.id)
   }
   if (dto.title !== undefined) {
     await findAdministeredGroupOrFail(conversationId, actor.id)

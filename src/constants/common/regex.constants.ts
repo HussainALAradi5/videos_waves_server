@@ -4,8 +4,6 @@ export const REGEX = {
   PASSWORD: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,72}$/,
   /** E.164 after normalisation: a plus, a country code, 8 to 15 digits in all. */
   PHONE: /^\+[1-9]\d{7,14}$/,
-  /** A whole email address, for telling an email search from a phone search (not full RFC validation). */
-  EMAIL: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
   SPECIAL_CHARACTERS: /[.*+?^${}()|[\]\\]/g,
   /** `/videos-waves/<kind>/<userId>`: the only folders uploads may target (no traversal possible). */
   MEDIA_FOLDER: /^\/videos-waves\/(video|avatar|chat_attachment|voice_note)\/[a-f\d]{24}$/i,
