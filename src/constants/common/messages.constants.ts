@@ -21,6 +21,8 @@ export const MESSAGES = {
     NOT_FOUND: 'User not found.',
     EMAIL_TAKEN: 'An account with this email already exists.',
     USER_NAME_TAKEN: 'This username is already taken.',
+    PHONE_TAKEN: 'This phone number is already used by another account.',
+    PHONE_RULE: 'Enter the phone number with its country code, for example +973 3300 1122.',
     CURRENT_PASSWORD_INCORRECT: 'The current password is incorrect.',
     PASSWORD_CHANGED: 'Your password has been changed. Please sign in again.',
     DEACTIVATED: 'Your account has been deactivated.',

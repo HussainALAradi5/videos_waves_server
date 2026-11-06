@@ -52,6 +52,10 @@ class UserRepository extends BaseRepository<User> {
     return this.isTaken({ email: email.toLowerCase() }, exceptId)
   }
 
+  async isPhoneTaken(phone: string, exceptId?: string): Promise<boolean> {
+    return this.isTaken({ phone }, exceptId)
+  }
+
   async isUserNameTaken(userName: string, exceptId?: string): Promise<boolean> {
     return this.isTaken({ userName }, exceptId)
   }

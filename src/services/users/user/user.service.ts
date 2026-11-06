@@ -25,6 +25,8 @@ import { purgeProviderFiles } from '../../media/media/media-cleanup.service'
 import { USER_PUBLIC_FIELDS } from '../../../constants/users/user/user.constants'
 import type { UserSearchQueryDto } from '../../../dtos/users/user/user-search-query.dto'
 import type { UserSummaryResponseDto } from '../../../dtos/users/follow/user-summary-response.dto'
+import { parseContact } from '../../../utilities/users/contact.utility'
+import { buildPageMeta } from '../../../utilities/pagination/paginate.utility'
 import { AccountStatus } from '../../../enums/users/user/account-status.enum'
 import { getHiddenUserIds } from '../visibility/visibility.service'
 import { toUserSummaries } from '../follow/follow.service'
@@ -86,14 +88,19 @@ export const deactivateAccount = async (userId: string): Promise<void> => {
   await revokeAllSessions(userId)
 }
 
-/** Public people search; users hidden from the viewer by a block never appear. */
+/**
+ * People search (Search tab, new message, add to group): only a full email or phone number that an
+ * account uses finds it, so nobody can browse the member list. Hidden users never appear.
+ */
 export const searchUsers = async (
   query: UserSearchQueryDto,
   viewerId?: string
 ): Promise<PageResult<UserSummaryResponseDto>> => {
+  const contact = query.search ? parseContact(query.search) : null
+  if (!contact) return { items: [], meta: buildPageMeta(query.page, query.pageSize, 0) }
   const hidden = await getHiddenUserIds(viewerId)
-  const filter: QueryFilter<User> = hidden.length > 0 ? { _id: { $nin: hidden.map(toObjectId) } } : {}
-  if (query.search) filter.userName = new RegExp(escapeRegex(query.search), 'i')
+  const filter: QueryFilter<User> = { ...contact }
+  if (hidden.length > 0) filter._id = { $nin: hidden.map(toObjectId) }
   const page = await userRepository.paginate<User>(filter, query, { projection: USER_PUBLIC_FIELDS })
   return { items: await toUserSummaries(page.items, viewerId), meta: page.meta }
 }
@@ -106,7 +113,7 @@ export const buildUserListFilter = (query: Pick<UserQueryDto, 'search' | 'role' 
   if (query.status) filter.deactivatedAt = query.status === AccountStatus.ACTIVE ? null : { $ne: null }
   if (query.search) {
     const pattern = new RegExp(escapeRegex(query.search), 'i')
-    filter.$or = [{ userName: pattern }, { email: pattern }]
+    filter.$or = [{ userName: pattern }, { email: pattern }, { phone: pattern }]
   }
   return filter
 }

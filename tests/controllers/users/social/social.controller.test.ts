@@ -62,7 +62,7 @@ describe('social endpoints', () => {
     expect(feed.body.data).toHaveLength(0)
     await api().post(`/videos/${video.id}/comments`).set(...bearer(pest)).send({ content: 'hi' }).expect(404)
     await api().put('/users/pest/follow').set(...bearer(blocker)).expect(409)
-    const search = await api().get('/users/search?search=blo').set(...bearer(pest)).expect(200)
+    const search = await api().get('/users/search?search=blocker@example.com').set(...bearer(pest)).expect(200)
     expect(search.body.data).toHaveLength(0)
     const blocked = await api().get('/users/me/blocked').set(...bearer(blocker)).expect(200)
     expect(blocked.body.data.map((row: { userName: string }) => row.userName)).toEqual(['pest'])

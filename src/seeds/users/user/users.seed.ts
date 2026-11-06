@@ -44,6 +44,7 @@ export const seedUsers = async (): Promise<Record<string, string>> => {
         _id: id,
         userName: seed.userName,
         email: seed.email,
+        phone: seed.phone,
         role: seed.role,
         gender: seed.gender,
         bio: seed.bio,
