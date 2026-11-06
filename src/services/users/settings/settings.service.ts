@@ -1,3 +1,6 @@
+import { acceptAllFollowRequests } from '../follow-request/follow-request.service'
+import { isOnline } from '../../chat/realtime/presence.service'
+import { broadcastPresence } from '../../chat/realtime/realtime-relay.service'
 import { MessagePermission } from '../../../enums/users/settings/message-permission.enum'
 import type { UpdateSettingsDto } from '../../../dtos/users/settings/update-settings.dto'
 import type { AuthUser } from '../../../interfaces/users/auth/auth-user.interface'
@@ -7,8 +10,13 @@ import { userSettingsRepository } from '../../../repositories/users/settings/use
 
 export const getSettings = (actor: AuthUser): Promise<SettingsValues> => userSettingsRepository.findValues(actor.id)
 
-export const updateSettings = (dto: UpdateSettingsDto, actor: AuthUser): Promise<SettingsValues> =>
-  userSettingsRepository.saveValues(actor.id, dto)
+export const updateSettings = async (dto: UpdateSettingsDto, actor: AuthUser): Promise<SettingsValues> => {
+  const saved = await userSettingsRepository.saveValues(actor.id, dto)
+  if (dto.privateAccount === false) await acceptAllFollowRequests(actor.id)
+  const changesPresence = dto.presence !== undefined || dto.statusText !== undefined || dto.showActivityStatus !== undefined
+  if (changesPresence) await broadcastPresence(actor.id, isOnline(actor.id))
+  return saved
+}
 
 /** `messagePermission`: people who only accept messages from accounts they follow. */
 export const acceptsMessagesFrom = async (recipientId: string, senderId: string): Promise<boolean> => {

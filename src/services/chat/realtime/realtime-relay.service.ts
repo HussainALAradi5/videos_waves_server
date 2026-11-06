@@ -1,3 +1,6 @@
+import { PresenceState } from '../../../enums/chat/realtime/presence-state.enum'
+import { toPresenceState } from '../../../utilities/realtime/presence-state.utility'
+import { userSettingsRepository } from '../../../repositories/users/settings/user-settings.repository'
 import { ChatEvent } from '../../../enums/chat/realtime/chat-event.enum'
 import { ConversationType } from '../../../enums/chat/conversation/conversation-type.enum'
 import type { TypingEventDto } from '../../../dtos/chat/realtime/typing-event.dto'
@@ -27,5 +30,12 @@ export const broadcastPresence = async (userId: string, isOnline: boolean): Prom
   const direct = await conversationRepository.findIdsByType(mine, ConversationType.DIRECT)
   const members = await conversationMemberRepository.findActiveForConversations(direct)
   const partners = new Set(members.map((member) => member.user.toString()).filter((id) => id !== userId))
-  emitToUsers(await withoutRestricted(userId, [...partners]), ChatEvent.PRESENCE, { userId, isOnline })
+  const settings = await userSettingsRepository.findValues(userId)
+  const presence = toPresenceState(isOnline, settings.presence)
+  emitToUsers(await withoutRestricted(userId, [...partners]), ChatEvent.PRESENCE, {
+    userId,
+    isOnline: presence !== PresenceState.OFFLINE,
+    presence,
+    statusText: settings.statusText || null
+  })
 }

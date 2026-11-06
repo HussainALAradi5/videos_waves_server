@@ -145,6 +145,10 @@ export const deleteMessage = async (params: MessageParamsDto, scope: DeleteScope
   if (scope === DeleteScope.ME) return messageRepository.hideFor(params.messageId, actor.id)
   if (!isSameId(message.sender, actor.id)) throw forbidden(MESSAGES.CHAT.NOT_SENDER)
   if (message.unsentAt) return
+  // As on Instagram's "unsend before seen": once anyone else has read it, it stays (delete for me still works).
+  if (await conversationMemberRepository.hasOtherReadSince(params.conversationId, actor.id, message.createdAt)) {
+    throw conflict(MESSAGES.CHAT.ALREADY_SEEN)
+  }
   const mediaIds = message.attachments.map(String)
   const unsent = await withTransaction(async () => {
     await releaseMedia(mediaIds, actor.id)

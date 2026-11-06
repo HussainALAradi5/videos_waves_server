@@ -1,3 +1,4 @@
+import * as followRequestController from '../../../controllers/users/follow-request/follow-request.controller'
 import { Router } from 'express'
 import { ROUTES } from '../../../constants/common/routes.constants'
 import { Role } from '../../../enums/users/roles/role.enum'
@@ -52,6 +53,9 @@ userRoutes.get(U.ME_SETTINGS, authenticate, settingsController.getMySettings)
 userRoutes.patch(U.ME_SETTINGS, authenticate, validate({ body: updateSettingsSchema }), settingsController.updateMySettings)
 userRoutes.get(U.ME_BLOCKED, authenticate, myRelationPage, blockController.listBlockedUsers)
 userRoutes.get(U.ME_RESTRICTED, authenticate, myRelationPage, restrictionController.listRestrictedUsers)
+userRoutes.get(U.ME_FOLLOW_REQUESTS, authenticate, myRelationPage, followRequestController.listFollowRequests)
+userRoutes.put(U.ME_FOLLOW_REQUEST, authenticate, byUserName, followRequestController.acceptFollowRequest)
+userRoutes.delete(U.ME_FOLLOW_REQUEST, authenticate, byUserName, followRequestController.declineFollowRequest)
 
 userRoutes.get(U.PROFILE, optionalAuthenticate, byUserName, profileController.getProfile)
 userRoutes.get(U.FOLLOWERS, optionalAuthenticate, relationPage, followController.listFollowers)

@@ -19,4 +19,12 @@ export interface ProfileResponseDto extends PublicUserResponseDto {
   isBlocked: boolean
   /** The viewer restricted this user. */
   isRestricted: boolean
+  /** The viewer asked to follow this private account and is waiting. */
+  isRequested: boolean
+  /** This user asked to follow the viewer's private account (show Accept / Decline). */
+  requestedYou: boolean
+  /** Only approved followers see a private account's videos and follow lists. */
+  isPrivate: boolean
+  /** False for a private account the viewer does not follow: show the lock instead of videos. */
+  canViewContent: boolean
 }

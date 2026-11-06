@@ -1,3 +1,5 @@
+import { NotificationKind } from '../../../enums/notifications/notification/notification-kind.enum'
+import { notify } from '../../notifications/notification/notification.service'
 import type { HydratedDocument, QueryFilter, Types } from 'mongoose'
 import { MESSAGES } from '../../../constants/common/messages.constants'
 import { USER_PUBLIC_FIELDS } from '../../../constants/users/user/user.constants'
@@ -75,7 +77,7 @@ const listThread = async (
   query: CommentQueryDto,
   viewerId?: string
 ): Promise<PageResult<CommentResponseDto>> => {
-  const video = await findVideoOrFail(videoId, viewerId)
+  const video = await findVideoOrFail(videoId, viewerId, true)
   const filter = { ...(await buildVisibleFilter(video.owner, parentId, viewerId)), video: video._id }
   const page = await commentRepository.paginate<CommentWithAuthor>(filter, query, { populate: AUTHOR_POPULATE })
   return { items: page.items.map((comment) => toCommentResponse(comment, video.owner)), meta: page.meta }
@@ -120,6 +122,15 @@ export const createComment = async (
     await applyCommentCounters(created, 1)
     return created
   })
+  // A restricted person's pending comment stays quiet until the owner approves it.
+  if (!isRestricted) {
+    if (parent) {
+      await notify({ userId: parent.author.toString(), kind: NotificationKind.REPLY, actorId: actor.id, targetId: videoId, subject: video.title })
+    }
+    if (!parent || !isSameId(parent.author, video.owner.toString())) {
+      await notify({ userId: video.owner.toString(), kind: NotificationKind.COMMENT, actorId: actor.id, targetId: videoId, subject: video.title })
+    }
+  }
   return getCommentResponse(comment._id.toString(), video.owner)
 }
 

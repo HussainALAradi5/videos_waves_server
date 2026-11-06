@@ -4,5 +4,7 @@ export enum BubbleColor {
   OCEAN = 'ocean',
   SUNSET = 'sunset',
   FOREST = 'forest',
-  MONO = 'mono'
+  MONO = 'mono',
+  /** The default for other people's bubbles: the theme's neutral surface. */
+  NEUTRAL = 'neutral'
 }

@@ -1,3 +1,4 @@
+import { followRequestRepository } from '../../../repositories/users/follow-request/follow-request.repository'
 import { MESSAGES } from '../../../constants/common/messages.constants'
 import { USER_PUBLIC_FIELDS } from '../../../constants/users/user/user.constants'
 import type { RelationQueryDto } from '../../../dtos/users/follow/relation-query.dto'
@@ -31,6 +32,8 @@ export const blockUser = async (userName: string, actor: AuthUser): Promise<Rela
     await blockRepository.addOnce(actor.id, targetId)
     await removeFollow(actor.id, targetId)
     await removeFollow(targetId, actor.id)
+    await followRequestRepository.remove(actor.id, targetId)
+    await followRequestRepository.remove(targetId, actor.id)
   })
   return { userName: target.userName, isActive: true }
 }

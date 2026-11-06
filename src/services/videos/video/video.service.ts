@@ -1,3 +1,5 @@
+import { userSettingsRepository } from '../../../repositories/users/settings/user-settings.repository'
+import { canViewContentOf, findLockedOwnerIds } from '../../users/privacy/privacy.service'
 import type { QueryFilter } from 'mongoose'
 import { MESSAGES } from '../../../constants/common/messages.constants'
 import { USER_PUBLIC_FIELDS } from '../../../constants/users/user/user.constants'
@@ -16,7 +18,7 @@ import { commentRepository } from '../../../repositories/videos/comment/comment.
 import { userRepository } from '../../../repositories/users/user/user.repository'
 import { toVideoResponse } from '../../../mappers/videos/video/video.mapper'
 import { assertCanManage } from '../../../validations/common/ownership.validation'
-import { notFound, unauthorized } from '../../../utilities/errors/app-error.utility'
+import { forbidden, notFound, unauthorized } from '../../../utilities/errors/app-error.utility'
 import { FeedScope } from '../../../enums/videos/video/feed-scope.enum'
 import { followRepository } from '../../../repositories/users/follow/follow.repository'
 import { getHiddenUserIds, isBlockedEitherWay } from '../../users/visibility/visibility.service'
@@ -34,10 +36,11 @@ const VIDEO_POPULATE = [{ path: 'owner', select: USER_PUBLIC_FIELDS }, { path: '
  * Loads an active video or throws 404; shared by every video, like, and comment workflow. With a
  * viewer, a video whose owner and viewer are blocked either way also looks missing.
  */
-export const findVideoOrFail = async (videoId: string, viewerId?: string) => {
+export const findVideoOrFail = async (videoId: string, viewerId?: string, checkPrivacy = viewerId !== undefined) => {
   const video = await videoRepository.findById(videoId)
   if (!video || (await userRepository.isDeactivated(video.owner.toString()))) throw notFound(MESSAGES.VIDEOS.NOT_FOUND)
   if (viewerId && (await isBlockedEitherWay(video.owner.toString(), viewerId))) throw notFound(MESSAGES.VIDEOS.NOT_FOUND)
+  if (checkPrivacy && !(await canViewContentOf(video.owner.toString(), viewerId))) throw forbidden(MESSAGES.SOCIAL.PRIVATE_ACCOUNT)
   return video
 }
 
@@ -49,12 +52,22 @@ const findVideoWithOwnerOrFail = async (videoId: string, viewerId?: string): Pro
   if (viewerId && (await isBlockedEitherWay(video.owner._id.toString(), viewerId))) {
     throw notFound(MESSAGES.VIDEOS.NOT_FOUND)
   }
+  if (!(await canViewContentOf(video.owner._id.toString(), viewerId))) throw forbidden(MESSAGES.SOCIAL.PRIVATE_ACCOUNT)
   return video
 }
 
-/** Which owners a feed may show: hidden users never; with `following`, only people the viewer follows. */
+/**
+ * Which owners a feed may show: hidden users and private accounts the viewer does not follow never;
+ * with `following`, only people the viewer follows; with `discover`, public accounts only.
+ */
 const buildOwnerFilter = async (query: VideoQueryDto, viewerId?: string): Promise<QueryFilter<Video>['owner']> => {
-  const hidden = (await getHiddenUserIds(viewerId)).map(toObjectId)
+  const [blockedOrGone, locked] = await Promise.all([
+    getHiddenUserIds(viewerId),
+    query.scope === FeedScope.DISCOVER ? userSettingsRepository.findPrivateUserIds() : findLockedOwnerIds(viewerId)
+  ])
+  const excluded = [...blockedOrGone, ...locked]
+  if (query.scope === FeedScope.DISCOVER && viewerId) excluded.push(viewerId)
+  const hidden = [...new Set(excluded)].map(toObjectId)
   const condition: Record<string, unknown> = hidden.length > 0 ? { $nin: hidden } : {}
   if (query.scope === FeedScope.FOLLOWING) {
     if (!viewerId) throw unauthorized(MESSAGES.SOCIAL.FOLLOWING_REQUIRED)

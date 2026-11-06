@@ -1,3 +1,6 @@
+import { STATUS_TEXT_MAX } from '../../../constants/users/settings/settings.constants'
+import { PresenceMode } from '../../../enums/users/settings/presence-mode.enum'
+import { BubbleStyle } from '../../../enums/users/settings/bubble-style.enum'
 import { z } from 'zod'
 import { BubbleColor } from '../../../enums/users/settings/bubble-color.enum'
 import { MessagePermission } from '../../../enums/users/settings/message-permission.enum'
@@ -14,7 +17,13 @@ export const updateSettingsSchema = z
     [SettingKey.MESSAGE_PERMISSION]: z.enum(MessagePermission),
     [SettingKey.MESSAGE_PREVIEWS]: z.boolean(),
     [SettingKey.MESSAGE_SOUND]: z.boolean(),
-    [SettingKey.BUBBLE_COLOR]: z.enum(BubbleColor)
+    [SettingKey.BUBBLE_COLOR]: z.enum(BubbleColor),
+    [SettingKey.OTHERS_BUBBLE_COLOR]: z.enum(BubbleColor),
+    [SettingKey.BUBBLE_STYLE]: z.enum(BubbleStyle),
+    [SettingKey.NOTIFY_MESSAGES]: z.boolean(),
+    [SettingKey.PRESENCE]: z.enum(PresenceMode),
+    [SettingKey.STATUS_TEXT]: z.string().trim().max(STATUS_TEXT_MAX),
+    [SettingKey.PRIVATE_ACCOUNT]: z.boolean()
   })
   .partial()
   .strict()

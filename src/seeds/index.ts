@@ -3,6 +3,7 @@ import { connectDatabase, disconnectDatabase } from '../config/database/database
 import { SEED_CREDENTIALS_FILE } from '../constants/users/user/seed-users.constants'
 import { logger } from '../utilities/logging/logger.utility'
 import { seedChats } from './chat/conversation/chats.seed'
+import { seedSettings } from './users/settings/settings.seed'
 import { seedFollows } from './users/social/follows.seed'
 import { seedUsers } from './users/user/users.seed'
 import { seedComments } from './videos/comment/comments.seed'
@@ -28,6 +29,7 @@ export const runSeeds = async (): Promise<void> => {
   await seedFollows()
   await seedComments()
   await seedChats()
+  await seedSettings()
 }
 
 if (require.main === module) {

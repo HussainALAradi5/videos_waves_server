@@ -1,3 +1,5 @@
+import { NotificationKind } from '../../../enums/notifications/notification/notification-kind.enum'
+import { notify } from '../../notifications/notification/notification.service'
 import { MESSAGES } from '../../../constants/common/messages.constants'
 import { CONVERSATION_LIMITS } from '../../../constants/chat/conversation/conversation.constants'
 import { ConversationType } from '../../../enums/chat/conversation/conversation-type.enum'
@@ -49,6 +51,13 @@ const upsertInvitees = async (conversationId: string, invitees: Invitee[], actor
 }
 
 /** The creator becomes the group's admin; invitees who do not follow them get it as a request. */
+/** Group changes always reach the bell (as in e_clinic). */
+const notifyAdded = async (invitees: Invitee[], conversationId: string, title: string, actor: AuthUser) => {
+  for (const { user } of invitees) {
+    await notify({ userId: user._id.toString(), kind: NotificationKind.GROUP_ADDED, actorId: actor.id, targetId: conversationId, subject: title })
+  }
+}
+
 export const createGroup = async (dto: CreateGroupDto, actor: AuthUser): Promise<ConversationResponseDto> => {
   const invitees = await resolveInvitees(dto.userNames, actor)
   if (invitees.length < CONVERSATION_LIMITS.GROUP_MIN_INVITEES) throw badRequest(MESSAGES.COMMON.VALIDATION_FAILED)
@@ -64,6 +73,7 @@ export const createGroup = async (dto: CreateGroupDto, actor: AuthUser): Promise
     return { conversationId: id, notices: [await postSystemMessage(id, actor.id, SystemAction.GROUP_CREATED)] }
   })
   await broadcastMessages(conversationId, notices)
+  await notifyAdded(invitees, conversationId, dto.title, actor)
   return getConversation(conversationId, actor)
 }
 
@@ -82,6 +92,7 @@ export const addMembers = async (conversationId: string, dto: AddMembersDto, act
     return posted
   })
   await broadcastMessages(conversationId, notices)
+  await notifyAdded(invitees, conversationId, conversation.title ?? '', actor)
   return getConversation(conversationId, actor)
 }
 

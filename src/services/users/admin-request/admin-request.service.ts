@@ -1,3 +1,5 @@
+import { NotificationKind } from '../../../enums/notifications/notification/notification-kind.enum'
+import { notify } from '../../notifications/notification/notification.service'
 import type { QueryFilter } from 'mongoose'
 import { MESSAGES } from '../../../constants/common/messages.constants'
 import { USER_PUBLIC_FIELDS } from '../../../constants/users/user/user.constants'
@@ -81,7 +83,7 @@ export const decideAdminRequest = async (
   dto: DecideAdminRequestDto,
   actor: AuthUser
 ): Promise<AdminRequestResponseDto> => {
-  await withTransaction(async () => {
+  const requesterId = await withTransaction(async () => {
     const decided = await adminRequestRepository.transitionFromPending(
       requestId,
       { status: dto.status, decidedBy: toObjectId(actor.id), decidedAt: new Date(), decisionNote: dto.note ?? null },
@@ -91,7 +93,10 @@ export const decideAdminRequest = async (
     if (dto.status === AdminRequestStatus.ACCEPTED) {
       await userRepository.updateById(decided.requester.toString(), { $set: { role: Role.ADMIN } }, actor.id)
     }
+    return decided.requester.toString()
   })
+  const kind = dto.status === AdminRequestStatus.ACCEPTED ? NotificationKind.ADMIN_ACCEPTED : NotificationKind.ADMIN_REJECTED
+  await notify({ userId: requesterId, kind, actorId: null, targetId: requestId })
   return getRequestResponse(requestId)
 }
 

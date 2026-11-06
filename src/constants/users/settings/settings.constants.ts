@@ -1,3 +1,5 @@
+import { PresenceMode } from '../../../enums/users/settings/presence-mode.enum'
+import { BubbleStyle } from '../../../enums/users/settings/bubble-style.enum'
 import { BubbleColor } from '../../../enums/users/settings/bubble-color.enum'
 import { MessagePermission } from '../../../enums/users/settings/message-permission.enum'
 import { SettingKey } from '../../../enums/users/settings/setting-key.enum'
@@ -15,7 +17,15 @@ export const DEFAULT_SETTINGS: SettingsValues = {
   [SettingKey.MESSAGE_PERMISSION]: MessagePermission.EVERYONE,
   [SettingKey.MESSAGE_PREVIEWS]: true,
   [SettingKey.MESSAGE_SOUND]: true,
-  [SettingKey.BUBBLE_COLOR]: BubbleColor.WAVE
+  [SettingKey.BUBBLE_COLOR]: BubbleColor.WAVE,
+  [SettingKey.OTHERS_BUBBLE_COLOR]: BubbleColor.NEUTRAL,
+  [SettingKey.BUBBLE_STYLE]: BubbleStyle.ROUNDED,
+  [SettingKey.NOTIFY_MESSAGES]: true,
+  [SettingKey.PRESENCE]: PresenceMode.ONLINE,
+  [SettingKey.STATUS_TEXT]: '',
+  [SettingKey.PRIVATE_ACCOUNT]: false
 }
+
+export const STATUS_TEXT_MAX = 60
 
 export const SETTING_KEYS = Object.values(SettingKey)

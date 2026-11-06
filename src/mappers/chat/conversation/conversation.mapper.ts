@@ -1,3 +1,5 @@
+import { ChatBackground } from '../../../enums/chat/conversation/chat-background.enum'
+import { PresenceState } from '../../../enums/chat/realtime/presence-state.enum'
 import type { HydratedDocument } from 'mongoose'
 import type { ChatMemberResponseDto } from '../../../dtos/chat/conversation/chat-member-response.dto'
 import type { ConversationResponseDto } from '../../../dtos/chat/conversation/conversation-response.dto'
@@ -20,7 +22,9 @@ export const toChatMember = (
   user: toPublicUser(user),
   role: member.role,
   lastReadAt: status.hidesReads ? null : (member.lastReadAt?.toISOString() ?? null),
-  isOnline: status.hidesActivity ? null : status.isOnline
+  isOnline: status.hidesActivity ? null : status.presence !== PresenceState.OFFLINE,
+  presence: status.hidesActivity ? null : status.presence,
+  statusText: status.hidesActivity || status.statusText === '' ? null : status.statusText
 })
 
 export const toConversationResponse = (
@@ -39,7 +43,8 @@ export const toConversationResponse = (
     status: me.status,
     unreadCount: me.unreadCount,
     isMuted: isMutedNow(me.mutedUntil),
-    mutedUntil: isMutedNow(me.mutedUntil) ? me.mutedUntil!.toISOString() : null
+    mutedUntil: isMutedNow(me.mutedUntil) ? me.mutedUntil!.toISOString() : null,
+    background: me.background ?? ChatBackground.NONE
   },
   lastMessage: conversation.lastMessage
     ? {

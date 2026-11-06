@@ -17,7 +17,7 @@ describe('social endpoints', () => {
     await registerUser('ben')
     await api().put('/users/ben/follow').set(...bearer(ana)).expect(200)
     const again = await api().put('/users/ben/follow').set(...bearer(ana)).expect(200)
-    expect(again.body.data).toEqual({ userName: 'ben', isFollowing: true, followersCount: 1 })
+    expect(again.body.data).toEqual({ userName: 'ben', isFollowing: true, isRequested: false, followersCount: 1 })
     expect((await profile('ana', ana)).body.data).toMatchObject({ followingCount: 1, isMe: true })
     expect((await profile('ben', ana)).body.data).toMatchObject({ followersCount: 1, isFollowing: true, followsYou: false })
 

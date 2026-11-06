@@ -31,6 +31,13 @@ class UserSettingsRepository extends BaseRepository<UserSettings> {
     return new Map(userIds.map((id) => [id, byUser.get(id) ?? toValues(null)]))
   }
 
+  /** Users who set their account to private, optionally limited to `candidateIds`. */
+  async findPrivateUserIds(candidateIds?: string[]): Promise<string[]> {
+    const filter: Record<string, unknown> = { privateAccount: true }
+    if (candidateIds) filter.user = { $in: candidateIds.map(toObjectId) }
+    return (await this.model.find(filter).select('user').lean()).map((row) => row.user.toString())
+  }
+
   async saveValues(userId: string, changes: Partial<SettingsValues>): Promise<SettingsValues> {
     const user = toObjectId(userId)
     const row = await this.model

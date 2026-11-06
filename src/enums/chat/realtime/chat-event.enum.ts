@@ -7,5 +7,7 @@ export enum ChatEvent {
   CONVERSATION_READ = 'conversation:read',
   /** Client-to-server and server-to-client. */
   TYPING = 'typing',
-  PRESENCE = 'presence'
+  PRESENCE = 'presence',
+  /** A new entry in the notification bell. */
+  NOTIFICATION_NEW = 'notification:new'
 }

@@ -1,0 +1,1 @@
+export const FOLLOW_REQUEST_CODE_PREFIX = 'FRQ'

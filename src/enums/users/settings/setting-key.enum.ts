@@ -7,5 +7,11 @@ export enum SettingKey {
   MESSAGE_PERMISSION = 'messagePermission',
   MESSAGE_PREVIEWS = 'messagePreviews',
   MESSAGE_SOUND = 'messageSound',
-  BUBBLE_COLOR = 'bubbleColor'
+  BUBBLE_COLOR = 'bubbleColor',
+  OTHERS_BUBBLE_COLOR = 'othersBubbleColor',
+  BUBBLE_STYLE = 'bubbleStyle',
+  NOTIFY_MESSAGES = 'notifyMessages',
+  PRESENCE = 'presence',
+  STATUS_TEXT = 'statusText',
+  PRIVATE_ACCOUNT = 'privateAccount'
 }

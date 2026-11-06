@@ -1,3 +1,6 @@
+import { DEFAULT_SETTINGS } from '../../../constants/users/settings/settings.constants'
+import { toPresenceState } from '../../../utilities/realtime/presence-state.utility'
+import { userSettingsRepository } from '../../../repositories/users/settings/user-settings.repository'
 import type { ConversationResponseDto } from '../../../dtos/chat/conversation/conversation-response.dto'
 import type { ConversationMember } from '../../../interfaces/models/chat/conversation-member/conversation-member.interface'
 import { conversationRepository } from '../../../repositories/chat/conversation/conversation.repository'
@@ -25,11 +28,12 @@ export const buildConversationViews = async (
   ])
   const others = members.filter((member) => member.user.toString() !== viewerId)
   const otherIds = [...new Set(others.map((member) => member.user.toString()))]
-  const [users, restrictingViewer, hidingActivity, hidingReads] = await Promise.all([
+  const [users, restrictingViewer, hidingActivity, hidingReads, settings] = await Promise.all([
     userRepository.findPublicByIds(otherIds),
     restrictionRepository.findSourceIds(viewerId, otherIds),
     findUsersHiding(otherIds, 'showActivityStatus'),
-    findUsersHiding(otherIds, 'readReceipts')
+    findUsersHiding(otherIds, 'readReceipts'),
+    userSettingsRepository.findValuesForUsers(otherIds)
   ])
   const usersById = new Map(users.map((user) => [user._id.toString(), user]))
   const conversationsById = new Map(conversations.map((conversation) => [conversation._id.toString(), conversation]))
@@ -47,7 +51,8 @@ export const buildConversationViews = async (
         toChatMember(member, user, {
           hidesReads: isRestricting || hidingReads.has(userId),
           hidesActivity: isRestricting || hidingActivity.has(userId),
-          isOnline: isOnline(userId)
+          presence: toPresenceState(isOnline(userId), settings.get(userId)?.presence ?? DEFAULT_SETTINGS.presence),
+          statusText: settings.get(userId)?.statusText ?? ''
         })
       ]
     })

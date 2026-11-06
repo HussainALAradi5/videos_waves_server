@@ -1,3 +1,7 @@
+import { BubbleColor } from '../../enums/users/settings/bubble-color.enum'
+import { BubbleStyle } from '../../enums/users/settings/bubble-style.enum'
+import { PresenceMode } from '../../enums/users/settings/presence-mode.enum'
+import type { SettingsValues } from '../../interfaces/models/users/settings/settings-values.interface'
 /** Who follows whom in the demo: `[follower, following]`. */
 export const DEMO_FOLLOWS = [
   ['viewer', 'admin'],
@@ -60,3 +64,12 @@ export const DEMO_CHATS = {
   },
   request: { from: 'omar', to: 'maya', body: 'Hi Maya, loved your flower idea. Collab?' }
 } as const
+
+/** Demo preferences that show off status, private accounts, and chat looks (applied after the chats). */
+export const DEMO_SETTINGS: Record<string, Partial<SettingsValues>> = {
+  viewer: { presence: PresenceMode.ONLINE, statusText: 'Watching short films' },
+  lina: { bubbleColor: BubbleColor.OCEAN, othersBubbleColor: BubbleColor.FOREST, bubbleStyle: BubbleStyle.SQUARE },
+  omar: { presence: PresenceMode.BUSY, statusText: 'In class until 4' },
+  // A private account: people who do not follow maya see the lock and must send a request.
+  maya: { presence: PresenceMode.AWAY, statusText: 'Editing a timelapse', privateAccount: true, bubbleStyle: BubbleStyle.MINIMAL }
+}

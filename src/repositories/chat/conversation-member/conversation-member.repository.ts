@@ -31,6 +31,12 @@ class ConversationMemberRepository extends BaseRepository<ConversationMember> {
       .lean()
   }
 
+  /** True when any member other than `userId` read the chat at or after `since` (hidden read receipts included). */
+  async hasOtherReadSince(conversationId: string, userId: string, since: Date): Promise<boolean> {
+    const filter = { conversation: toObjectId(conversationId), user: { $ne: toObjectId(userId) }, lastReadAt: { $gte: since } }
+    return (await this.model.exists(this.active(filter as never))) !== null
+  }
+
   async findActiveUserIds(conversationId: string): Promise<string[]> {
     const rows = await this.model.find(this.active({ conversation: toObjectId(conversationId), leftAt: null }), 'user').lean()
     return rows.map((row) => row.user.toString())

@@ -1,5 +1,7 @@
+import { PresenceMode } from '../../../enums/users/settings/presence-mode.enum'
+import { BubbleStyle } from '../../../enums/users/settings/bubble-style.enum'
 import { Schema, model } from 'mongoose'
-import { DEFAULT_SETTINGS, USER_SETTINGS_CODE_PREFIX } from '../../../constants/users/settings/settings.constants'
+import { STATUS_TEXT_MAX, DEFAULT_SETTINGS, USER_SETTINGS_CODE_PREFIX } from '../../../constants/users/settings/settings.constants'
 import { BubbleColor } from '../../../enums/users/settings/bubble-color.enum'
 import { MessagePermission } from '../../../enums/users/settings/message-permission.enum'
 import { SettingKey } from '../../../enums/users/settings/setting-key.enum'
@@ -20,7 +22,13 @@ const settingsSchema = new Schema<UserSettings>({
   },
   [SettingKey.MESSAGE_PREVIEWS]: { type: Boolean, default: DEFAULT_SETTINGS.messagePreviews },
   [SettingKey.MESSAGE_SOUND]: { type: Boolean, default: DEFAULT_SETTINGS.messageSound },
-  [SettingKey.BUBBLE_COLOR]: { type: String, enum: Object.values(BubbleColor), default: DEFAULT_SETTINGS.bubbleColor }
+  [SettingKey.BUBBLE_COLOR]: { type: String, enum: Object.values(BubbleColor), default: DEFAULT_SETTINGS.bubbleColor },
+  [SettingKey.OTHERS_BUBBLE_COLOR]: { type: String, enum: Object.values(BubbleColor), default: DEFAULT_SETTINGS.othersBubbleColor },
+  [SettingKey.BUBBLE_STYLE]: { type: String, enum: Object.values(BubbleStyle), default: DEFAULT_SETTINGS.bubbleStyle },
+  [SettingKey.NOTIFY_MESSAGES]: { type: Boolean, default: DEFAULT_SETTINGS.notifyMessages },
+  [SettingKey.PRESENCE]: { type: String, enum: Object.values(PresenceMode), default: DEFAULT_SETTINGS.presence },
+  [SettingKey.STATUS_TEXT]: { type: String, default: DEFAULT_SETTINGS.statusText, trim: true, maxlength: STATUS_TEXT_MAX },
+  [SettingKey.PRIVATE_ACCOUNT]: { type: Boolean, default: DEFAULT_SETTINGS.privateAccount, index: true }
 })
 
 settingsSchema.plugin(baseEntityPlugin, { codePrefix: USER_SETTINGS_CODE_PREFIX })

@@ -1,3 +1,7 @@
+import { canViewContentOf, isPrivateAccount } from '../privacy/privacy.service'
+import { followRequestRepository } from '../../../repositories/users/follow-request/follow-request.repository'
+import { NotificationKind } from '../../../enums/notifications/notification/notification-kind.enum'
+import { notify } from '../../notifications/notification/notification.service'
 import { MESSAGES } from '../../../constants/common/messages.constants'
 import { USER_PUBLIC_FIELDS } from '../../../constants/users/user/user.constants'
 import type { FollowStateResponseDto } from '../../../dtos/users/follow/follow-state-response.dto'
@@ -12,7 +16,7 @@ import { followRepository } from '../../../repositories/users/follow/follow.repo
 import { userRepository } from '../../../repositories/users/user/user.repository'
 import { toPublicUser } from '../../../mappers/users/user/user.mapper'
 import { withTransaction } from '../../../utilities/database/transaction.utility'
-import { badRequest, conflict, notFound } from '../../../utilities/errors/app-error.utility'
+import { badRequest, conflict, forbidden, notFound } from '../../../utilities/errors/app-error.utility'
 import { findVisibleUserOrFail, getHiddenUserIds } from '../visibility/visibility.service'
 
 /** Maps users to people-list rows with one follow lookup for the whole page. */
@@ -20,12 +24,14 @@ export const toUserSummaries = async (
   users: PublicUserSource[],
   viewerId?: string
 ): Promise<UserSummaryResponseDto[]> => {
-  const followed = viewerId
-    ? await followRepository.findTargetIds(viewerId, users.map((user) => user._id.toString()))
-    : new Set<string>()
+  const ids = users.map((user) => user._id.toString())
+  const [followed, requested] = viewerId
+    ? await Promise.all([followRepository.findTargetIds(viewerId, ids), followRequestRepository.findTargetIds(viewerId, ids)])
+    : [new Set<string>(), new Set<string>()]
   return users.map((user) => ({
     ...toPublicUser(user),
     isFollowing: followed.has(user._id.toString()),
+    isRequested: requested.has(user._id.toString()),
     isMe: user._id.toString() === viewerId
   }))
 }
@@ -38,31 +44,45 @@ export const removeFollow = async (followerId: string, followingId: string): Pro
   return true
 }
 
-const toFollowState = async (userName: string, userId: string, isFollowing: boolean): Promise<FollowStateResponseDto> => {
+const toFollowState = async (userName: string, userId: string, isFollowing: boolean, isRequested = false): Promise<FollowStateResponseDto> => {
   const user = await userRepository.findById(userId)
   if (!user) throw notFound(MESSAGES.USERS.NOT_FOUND)
-  return { userName, isFollowing, followersCount: user.followersCount }
+  return { userName, isFollowing, isRequested, followersCount: user.followersCount }
 }
 
-/** Idempotent; the follow row and both counters commit together. */
+/** Adds `followerId -> followingId` and both counters; returns false when it already existed. Call inside a transaction. */
+export const addFollow = async (followerId: string, followingId: string): Promise<boolean> => {
+  if (!(await followRepository.addOnce(followerId, followingId))) return false
+  await userRepository.incrementCounter(followerId, 'followingCount', 1)
+  await userRepository.incrementCounter(followingId, 'followersCount', 1)
+  return true
+}
+
+/**
+ * Idempotent; the follow row and both counters commit together. A private account gets a follow
+ * request instead, which it accepts or declines (as on Instagram).
+ */
 export const followUser = async (userName: string, actor: AuthUser): Promise<FollowStateResponseDto> => {
   const target = await findVisibleUserOrFail(userName, actor.id)
   const targetId = target._id.toString()
   if (targetId === actor.id) throw badRequest(MESSAGES.SOCIAL.CANNOT_FOLLOW_SELF)
   if (await blockRepository.has(actor.id, targetId)) throw conflict(MESSAGES.SOCIAL.UNBLOCK_FIRST)
-  await withTransaction(async () => {
-    if (await followRepository.addOnce(actor.id, targetId)) {
-      await userRepository.incrementCounter(actor.id, 'followingCount', 1)
-      await userRepository.incrementCounter(targetId, 'followersCount', 1)
+  if (!(await followRepository.has(actor.id, targetId)) && (await isPrivateAccount(targetId))) {
+    if (await followRequestRepository.addOnce(actor.id, targetId)) {
+      await notify({ userId: targetId, kind: NotificationKind.FOLLOW_REQUEST, actorId: actor.id })
     }
-  })
+    return toFollowState(target.userName, targetId, false, true)
+  }
+  const isNew = await withTransaction(() => addFollow(actor.id, targetId))
+  if (isNew) await notify({ userId: targetId, kind: NotificationKind.FOLLOW, actorId: actor.id })
   return toFollowState(target.userName, targetId, true)
 }
 
-/** Idempotent: unfollowing someone you do not follow changes nothing. */
+/** Idempotent: unfollowing someone you do not follow changes nothing. Also cancels a pending request. */
 export const unfollowUser = async (userName: string, actor: AuthUser): Promise<FollowStateResponseDto> => {
   const target = await findVisibleUserOrFail(userName, actor.id)
   const targetId = target._id.toString()
+  await followRequestRepository.remove(actor.id, targetId)
   await withTransaction(() => removeFollow(actor.id, targetId))
   return toFollowState(target.userName, targetId, false)
 }
@@ -77,8 +97,9 @@ export const listFollows = async (
   viewerId?: string
 ): Promise<PageResult<UserSummaryResponseDto>> => {
   const user = await findVisibleUserOrFail(userName, viewerId)
-  const hidden = await getHiddenUserIds(viewerId)
   const userId = user._id.toString()
+  if (!(await canViewContentOf(userId, viewerId))) throw forbidden(MESSAGES.SOCIAL.PRIVATE_ACCOUNT)
+  const hidden = await getHiddenUserIds(viewerId)
   const page =
     side === 'followers'
       ? await followRepository.paginateSources<FollowWithUser>(userId, query, USER_PUBLIC_FIELDS, hidden)

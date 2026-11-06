@@ -1,3 +1,5 @@
+import { isPrivateAccount } from '../privacy/privacy.service'
+import { followRequestRepository } from '../../../repositories/users/follow-request/follow-request.repository'
 import type { ProfileResponseDto } from '../../../dtos/users/profile/profile-response.dto'
 import { blockRepository } from '../../../repositories/users/block/block.repository'
 import { followRepository } from '../../../repositories/users/follow/follow.repository'
@@ -6,16 +8,18 @@ import { toPublicUser } from '../../../mappers/users/user/user.mapper'
 import { Role } from '../../../enums/users/roles/role.enum'
 import { findVisibleUserOrFail } from '../visibility/visibility.service'
 
-const NO_RELATION = { isFollowing: false, followsYou: false, isBlocked: false, isRestricted: false }
+const NO_RELATION = { isFollowing: false, followsYou: false, isBlocked: false, isRestricted: false, isRequested: false, requestedYou: false }
 
 const loadRelation = async (viewerId: string, userId: string) => {
-  const [isFollowing, followsYou, isBlocked, isRestricted] = await Promise.all([
+  const [isFollowing, followsYou, isBlocked, isRestricted, isRequested, requestedYou] = await Promise.all([
     followRepository.has(viewerId, userId),
     followRepository.has(userId, viewerId),
     blockRepository.has(viewerId, userId),
-    restrictionRepository.has(viewerId, userId)
+    restrictionRepository.has(viewerId, userId),
+    followRequestRepository.has(viewerId, userId),
+    followRequestRepository.has(userId, viewerId)
   ])
-  return { isFollowing, followsYou, isBlocked, isRestricted }
+  return { isFollowing, followsYou, isBlocked, isRestricted, isRequested, requestedYou }
 }
 
 /** A public profile with the viewer's relations to it (all false for guests and for oneself). */
@@ -24,6 +28,7 @@ export const getProfile = async (userName: string, viewerId?: string, viewerRole
   const userId = user._id.toString()
   const isMe = userId === viewerId
   const relation = viewerId && !isMe ? await loadRelation(viewerId, userId) : NO_RELATION
+  const isPrivate = await isPrivateAccount(userId)
   return {
     ...toPublicUser(user),
     bio: user.bio,
@@ -34,6 +39,8 @@ export const getProfile = async (userName: string, viewerId?: string, viewerRole
     isMe,
     role: user.role,
     isActive: user.deactivatedAt === null,
-    ...relation
+    ...relation,
+    isPrivate,
+    canViewContent: isMe || !isPrivate || relation.isFollowing
   }
 }

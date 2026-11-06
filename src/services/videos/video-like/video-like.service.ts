@@ -1,3 +1,5 @@
+import { NotificationKind } from '../../../enums/notifications/notification/notification-kind.enum'
+import { notify } from '../../notifications/notification/notification.service'
 import type { VideoLikeResponseDto } from '../../../dtos/videos/video/video-like-response.dto'
 import type { AuthUser } from '../../../interfaces/users/auth/auth-user.interface'
 import { videoRepository } from '../../../repositories/videos/video/video.repository'
@@ -12,12 +14,15 @@ const buildLikeResponse = async (videoId: string, isLiked: boolean): Promise<Vid
 
 /** Idempotent: liking twice keeps one like and counts it once. The like and its counter commit together. */
 export const likeVideo = async (videoId: string, actor: AuthUser): Promise<VideoLikeResponseDto> => {
-  await findVideoOrFail(videoId, actor.id)
-  await withTransaction(async () => {
-    if (await videoLikeRepository.likeOnce(videoId, actor.id)) {
-      await videoRepository.incrementCounter(videoId, 'likesCount', 1)
-    }
+  const video = await findVideoOrFail(videoId, actor.id)
+  const isNew = await withTransaction(async () => {
+    if (!(await videoLikeRepository.likeOnce(videoId, actor.id))) return false
+    await videoRepository.incrementCounter(videoId, 'likesCount', 1)
+    return true
   })
+  if (isNew) {
+    await notify({ userId: video.owner.toString(), kind: NotificationKind.LIKE, actorId: actor.id, targetId: videoId, subject: video.title })
+  }
   return buildLikeResponse(videoId, true)
 }
 

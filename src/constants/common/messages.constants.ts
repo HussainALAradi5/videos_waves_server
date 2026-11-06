@@ -38,7 +38,9 @@ export const MESSAGES = {
     CANNOT_BLOCK_SELF: 'You cannot block yourself.',
     CANNOT_RESTRICT_SELF: 'You cannot restrict yourself.',
     UNBLOCK_FIRST: 'Unblock this account first.',
-    FOLLOWING_REQUIRED: 'Sign in and follow people to see their videos here.'
+    FOLLOWING_REQUIRED: 'Sign in and follow people to see their videos here.',
+    PRIVATE_ACCOUNT: 'This account is private. Follow it to see its videos.',
+    REQUEST_NOT_FOUND: 'Follow request not found.'
   },
   VIDEOS: {
     NOT_FOUND: 'Video not found.',
@@ -59,7 +61,11 @@ export const MESSAGES = {
     DELIVERY_SIGNATURE_INVALID: 'This link is invalid or has expired.',
     DELETED: 'Upload removed.'
   },
+  NOTIFICATIONS: {
+    NOT_FOUND: 'Notification not found.'
+  },
   CHAT: {
+    ALREADY_SEEN: 'This message was already seen, so it can no longer be unsent. You can still delete it for yourself.',
     NOT_FOUND: 'Chat not found.',
     NOT_A_MEMBER: 'You are not in this chat.',
     MESSAGE_NOT_FOUND: 'Message not found.',

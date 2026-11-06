@@ -53,6 +53,7 @@ const buildFolderFilter = async (query: ConversationQueryDto, userId: string): P
     status: query.folder === InboxFolder.REQUESTS ? MemberStatus.REQUEST : MemberStatus.ACCEPTED
   }
   if (query.folder === InboxFolder.UNREAD) filter.unreadCount = { $gt: 0 }
+  if (query.folder === InboxFolder.READ) filter.unreadCount = 0
   const scopes: string[][] = []
   if (query.folder === InboxFolder.GROUPS) {
     const mine = await conversationMemberRepository.findConversationIdsForUser(userId)
@@ -63,7 +64,7 @@ const buildFolderFilter = async (query: ConversationQueryDto, userId: string): P
   return conversationMemberRepository.inboxFilter(userId, filter)
 }
 
-/** The viewer's inbox, requests, groups, or unread chats, most recent first. */
+/** The viewer's inbox, requests, groups, unread, or read chats, most recent first. */
 export const listConversations = async (
   query: ConversationQueryDto,
   actor: AuthUser
@@ -134,6 +135,9 @@ export const updateConversation = async (
   const mute = dto.mute ?? (dto.isMuted === undefined ? undefined : dto.isMuted ? MuteDuration.ALWAYS : MuteDuration.OFF)
   if (mute !== undefined) {
     await conversationMemberRepository.updateById(member._id.toString(), { $set: { mutedUntil: muteUntil(mute) } }, actor.id)
+  }
+  if (dto.background !== undefined) {
+    await conversationMemberRepository.updateById(member._id.toString(), { $set: { background: dto.background } }, actor.id)
   }
   if (dto.title !== undefined) {
     await findAdministeredGroupOrFail(conversationId, actor.id)

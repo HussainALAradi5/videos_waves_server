@@ -27,6 +27,8 @@ export const ROUTES = {
     ME_SETTINGS: '/me/settings',
     ME_BLOCKED: '/me/blocked',
     ME_RESTRICTED: '/me/restricted',
+    ME_FOLLOW_REQUESTS: '/me/follow-requests',
+    ME_FOLLOW_REQUEST: '/me/follow-requests/:userName',
     SEARCH: '/search',
     EXPORT: '/export',
     IMPORT: '/import',
@@ -52,6 +54,13 @@ export const ROUTES = {
     REPLIES: '/:commentId/replies',
     RESTORE: '/:commentId/restore',
     APPROVE: '/:commentId/approve'
+  },
+  NOTIFICATIONS: {
+    BASE: '/notifications',
+    ROOT: '/',
+    UNREAD_COUNT: '/unread-count',
+    READ_ALL: '/read-all',
+    READ: '/:notificationId/read'
   },
   CHAT: {
     BASE: '/chat',

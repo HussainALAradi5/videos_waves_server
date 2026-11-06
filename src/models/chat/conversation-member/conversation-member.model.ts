@@ -1,3 +1,4 @@
+import { ChatBackground } from '../../../enums/chat/conversation/chat-background.enum'
 import { Schema, model } from 'mongoose'
 import { CONVERSATION_MEMBER_CODE_PREFIX } from '../../../constants/chat/conversation/conversation.constants'
 import { MemberRole } from '../../../enums/chat/conversation/member-role.enum'
@@ -14,6 +15,7 @@ const memberSchema = new Schema<ConversationMember>({
   lastMessageAt: { type: Date, default: null },
   unreadCount: { type: Number, default: 0, min: 0 },
   mutedUntil: { type: Date, default: null },
+  background: { type: String, enum: Object.values(ChatBackground), default: ChatBackground.NONE },
   leftAt: { type: Date, default: null },
   hiddenAt: { type: Date, default: null }
 })
