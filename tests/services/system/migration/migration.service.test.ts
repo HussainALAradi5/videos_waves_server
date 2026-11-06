@@ -45,7 +45,7 @@ describe('migration service', () => {
 
   it('converts legacy users, videos, likes, comments, and admin requests', async () => {
     const { alice, bob } = await insertLegacyData()
-    expect(await runPendingMigrations()).toEqual(['001-legacy-schema', '002-sync-indexes'])
+    expect(await runPendingMigrations()).toEqual(['001-legacy-schema', '002-sync-indexes', '003-case-insensitive-usernames'])
 
     const admin = await UserModel.findById(alice).select('+passwordHash').lean()
     expect(admin).toMatchObject({ role: 'admin', passwordHash: 'hash-a', avatarUrl: 'https://cdn.example.com/a.png', deletedAt: null, videosCount: 1 })

@@ -3,7 +3,7 @@ import { UserModel } from '../../../models/users/user/user.model'
 import type { User } from '../../../interfaces/models/users/user/user.interface'
 import { BaseRepository } from '../../base/base.repository'
 import { toObjectId, toOptionalObjectId } from '../../../utilities/ids/object-id.utility'
-import { USER_PUBLIC_FIELDS } from '../../../constants/users/user/user.constants'
+import { USER_PUBLIC_FIELDS, USERNAME_COLLATION } from '../../../constants/users/user/user.constants'
 import { isPhone, normalizePhone } from '../../../utilities/users/contact.utility'
 
 const SECRET_FIELDS = '+passwordHash +tokenVersion'
@@ -24,11 +24,12 @@ class UserRepository extends BaseRepository<User> {
       : isPhone(normalized)
         ? { $or: [{ phone: normalizePhone(normalized) }, { userName: normalized }] }
         : { userName: normalized }
-    return this.model.findOne(this.active(filter)).select(SECRET_FIELDS)
+    return this.model.findOne(this.active(filter)).collation(USERNAME_COLLATION).select(SECRET_FIELDS)
   }
 
+  /** Ignores case: /u/LINA opens lina. */
   findByUserName(userName: string) {
-    return this.model.findOne(this.active({ userName }))
+    return this.model.findOne(this.active({ userName })).collation(USERNAME_COLLATION)
   }
 
   /** Public fields of many active users in one query. */
@@ -43,7 +44,7 @@ class UserRepository extends BaseRepository<User> {
 
   /** Active users by name, in one query. */
   findByUserNames(userNames: string[]) {
-    return this.model.find(this.active({ userName: { $in: userNames } }))
+    return this.model.find(this.active({ userName: { $in: userNames } })).collation(USERNAME_COLLATION)
   }
 
   findByIdWithSecrets(id: string) {
@@ -64,7 +65,7 @@ class UserRepository extends BaseRepository<User> {
   }
 
   async isUserNameTaken(userName: string, exceptId?: string): Promise<boolean> {
-    return this.isTaken({ userName }, exceptId)
+    return this.isTaken({ userName }, exceptId, true)
   }
 
   /** Includes deactivated accounts; the demo seed uses it to bring demo accounts back. */
@@ -97,9 +98,10 @@ class UserRepository extends BaseRepository<User> {
   }
 
   // Uniqueness checks include soft-deleted users so their unique keys are never reused.
-  private async isTaken(filter: QueryFilter<User>, exceptId?: string): Promise<boolean> {
+  private async isTaken(filter: QueryFilter<User>, exceptId?: string, ignoreCase = false): Promise<boolean> {
     const scoped = exceptId ? { ...filter, _id: { $ne: toObjectId(exceptId) } } : filter
-    return (await this.model.exists(scoped)) !== null
+    const query = this.model.exists(scoped)
+    return (await (ignoreCase ? query.collation(USERNAME_COLLATION) : query)) !== null
   }
 }
 

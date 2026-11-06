@@ -1,12 +1,12 @@
 import { Schema, model } from 'mongoose'
 import { Role } from '../../../enums/users/roles/role.enum'
 import { Gender } from '../../../enums/users/user/gender.enum'
-import { USER_CODE_PREFIX, USER_LIMITS } from '../../../constants/users/user/user.constants'
+import { USER_CODE_PREFIX, USER_LIMITS, USERNAME_COLLATION, USERNAME_INDEX_NAME } from '../../../constants/users/user/user.constants'
 import type { User } from '../../../interfaces/models/users/user/user.interface'
 import { baseEntityPlugin } from '../../base/base-entity.model'
 
 const userSchema = new Schema<User>({
-  userName: { type: String, required: true, unique: true, trim: true },
+  userName: { type: String, required: true, trim: true },
   email: {
     type: String,
     required: true,
@@ -31,6 +31,8 @@ const userSchema = new Schema<User>({
 })
 
 userSchema.plugin(baseEntityPlugin, { codePrefix: USER_CODE_PREFIX })
+// Unique ignoring case; queries pass the same collation so they use this index.
+userSchema.index({ userName: 1 }, { unique: true, collation: USERNAME_COLLATION, name: USERNAME_INDEX_NAME })
 userSchema.index({ followersCount: -1 })
 
 // Unique only among accounts that have one; most accounts have no phone.
