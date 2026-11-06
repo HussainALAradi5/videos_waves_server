@@ -12,4 +12,5 @@ export interface UserResponseDto extends BaseEntityResponseDto {
   followersCount: number
   followingCount: number
   videosCount: number
+  isActive: boolean
 }

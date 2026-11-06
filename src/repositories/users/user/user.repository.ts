@@ -2,7 +2,7 @@ import type { QueryFilter } from 'mongoose'
 import { UserModel } from '../../../models/users/user/user.model'
 import type { User } from '../../../interfaces/models/users/user/user.interface'
 import { BaseRepository } from '../../base/base.repository'
-import { toObjectId } from '../../../utilities/ids/object-id.utility'
+import { toObjectId, toOptionalObjectId } from '../../../utilities/ids/object-id.utility'
 import { USER_PUBLIC_FIELDS } from '../../../constants/users/user/user.constants'
 
 const SECRET_FIELDS = '+passwordHash +tokenVersion'
@@ -44,7 +44,8 @@ class UserRepository extends BaseRepository<User> {
   }
 
   findAuthState(id: string) {
-    return this.model.findOne(this.active({ _id: toObjectId(id) }), 'role +tokenVersion').lean()
+    // A deactivated account has no usable auth state, so its tokens stop working at once.
+    return this.model.findOne(this.active({ _id: toObjectId(id), deactivatedAt: null }), 'role +tokenVersion').lean()
   }
 
   async isEmailTaken(email: string, exceptId?: string): Promise<boolean> {
@@ -59,6 +60,25 @@ class UserRepository extends BaseRepository<User> {
   async findIdByEmailIncludingDeleted(email: string): Promise<string | null> {
     const user = await this.model.findOne({ email: email.toLowerCase() }, '_id').lean()
     return user ? user._id.toString() : null
+  }
+
+  findForExport(filter: QueryFilter<User>, limit: number) {
+    return this.model.find(this.active(filter)).sort({ createdAt: -1, _id: -1 }).limit(limit).lean()
+  }
+
+  async findDeactivatedIds(): Promise<string[]> {
+    const users = await this.model.find(this.active({ deactivatedAt: { $ne: null } }), '_id').lean()
+    return users.map((user) => user._id.toString())
+  }
+
+  async isDeactivated(id: string): Promise<boolean> {
+    return (await this.model.exists({ _id: toObjectId(id), deactivatedAt: { $ne: null } })) !== null
+  }
+
+  async setDeactivated(id: string, isDeactivated: boolean, actorId: string | null): Promise<void> {
+    const deactivatedAt = isDeactivated ? new Date() : null
+    const deactivatedBy = isDeactivated ? toOptionalObjectId(actorId) : null
+    await this.updateById(id, { $set: { deactivatedAt, deactivatedBy } }, actorId)
   }
 
   async incrementTokenVersion(id: string): Promise<void> {

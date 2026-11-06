@@ -28,7 +28,7 @@ import { getConversation } from './conversation.service'
 const resolveInvitees = async (userNames: string[], actor: AuthUser): Promise<Invitee[]> => {
   const unique = [...new Set(userNames)]
   const users = await userRepository.findByUserNames(unique)
-  if (users.length !== unique.length) throw notFound(MESSAGES.USERS.NOT_FOUND)
+  if (users.length !== unique.length || users.some((user) => user.deactivatedAt)) throw notFound(MESSAGES.USERS.NOT_FOUND)
   const invitees: Invitee[] = []
   for (const user of users.filter((candidate) => candidate._id.toString() !== actor.id)) {
     if (await isBlockedEitherWay(actor.id, user._id.toString())) throw forbidden(MESSAGES.CHAT.CANNOT_MESSAGE_USER)

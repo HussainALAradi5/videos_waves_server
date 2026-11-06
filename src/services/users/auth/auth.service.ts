@@ -7,7 +7,7 @@ import type { User } from '../../../interfaces/models/users/user/user.interface'
 import { userRepository } from '../../../repositories/users/user/user.repository'
 import { toUserResponse } from '../../../mappers/users/user/user.mapper'
 import { comparePassword, hashPassword, TIMING_SAFE_DUMMY_HASH } from '../../../utilities/security/password.utility'
-import { conflict, unauthorized } from '../../../utilities/errors/app-error.utility'
+import { conflict, forbidden, unauthorized } from '../../../utilities/errors/app-error.utility'
 import { startSession } from './session.service'
 
 /** Signs the user in on this device and returns their tokens with their profile. */
@@ -53,5 +53,6 @@ export const login = async (dto: LoginDto, userAgent: string): Promise<AuthRespo
   const user = await userRepository.findByLogin(dto.identifier)
   const isValid = await comparePassword(dto.password, user?.passwordHash ?? TIMING_SAFE_DUMMY_HASH)
   if (!user || !isValid) throw unauthorized(MESSAGES.AUTH.INVALID_CREDENTIALS)
+  if (user.deactivatedAt) throw forbidden(MESSAGES.AUTH.ACCOUNT_DEACTIVATED)
   return buildAuthResponse(user, userAgent)
 }

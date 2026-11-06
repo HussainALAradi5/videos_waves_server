@@ -7,6 +7,10 @@ import * as followController from '../../../controllers/users/follow/follow.cont
 import * as blockController from '../../../controllers/users/block/block.controller'
 import * as restrictionController from '../../../controllers/users/restriction/restriction.controller'
 import * as settingsController from '../../../controllers/users/settings/settings.controller'
+import * as accountStatusController from '../../../controllers/users/account-status/account-status.controller'
+import * as userTransferController from '../../../controllers/users/user-transfer/user-transfer.controller'
+import { importUsersSchema } from '../../../dtos/users/user/import-users.dto'
+import { updateAccountStatusSchema } from '../../../dtos/users/account-status/update-account-status.dto'
 import { updateSettingsSchema } from '../../../dtos/users/settings/update-settings.dto'
 import { updateProfileSchema } from '../../../dtos/users/user/update-profile.dto'
 import { changePasswordSchema } from '../../../dtos/users/user/change-password.dto'
@@ -29,6 +33,9 @@ export const userRoutes = Router()
 
 // Fixed paths first, so `/me` and `/search` are never read as a username (both are reserved names).
 userRoutes.get(U.ROOT, authenticate, authorize(Role.ADMIN), validate({ query: userQuerySchema }), userController.listUsers)
+// Registered before /:userName so these paths are never read as usernames.
+userRoutes.get(U.EXPORT, authenticate, authorize(Role.ADMIN), validate({ query: userQuerySchema }), userTransferController.exportUsers)
+userRoutes.post(U.IMPORT, authenticate, authorize(Role.ADMIN), validate({ body: importUsersSchema }), userTransferController.importUsers)
 userRoutes.get(U.SEARCH, optionalAuthenticate, validate({ query: userSearchQuerySchema }), profileController.searchUsers)
 userRoutes.get(U.ME, authenticate, userController.getMe)
 userRoutes.patch(U.ME, authenticate, validate({ body: updateProfileSchema }), userController.updateMe)
@@ -55,3 +62,10 @@ userRoutes.put(U.BLOCK, authenticate, byUserName, blockController.blockUser)
 userRoutes.delete(U.BLOCK, authenticate, byUserName, blockController.unblockUser)
 userRoutes.put(U.RESTRICT, authenticate, byUserName, restrictionController.restrictUser)
 userRoutes.delete(U.RESTRICT, authenticate, byUserName, restrictionController.unrestrictUser)
+userRoutes.patch(
+  U.STATUS,
+  authenticate,
+  authorize(Role.ADMIN),
+  validate({ params: userNameParamsSchema, body: updateAccountStatusSchema }),
+  accountStatusController.setAccountStatus
+)

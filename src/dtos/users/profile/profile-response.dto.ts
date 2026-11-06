@@ -7,6 +7,8 @@ export interface ProfileResponseDto extends PublicUserResponseDto {
   videosCount: number
   createdAt: string
   isMe: boolean
+  /** False when an admin deactivated the account (only admins can see such a profile). */
+  isActive: boolean
   /** The viewer follows this user. */
   isFollowing: boolean
   /** This user follows the viewer. */

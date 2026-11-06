@@ -28,12 +28,15 @@ export const ROUTES = {
     ME_BLOCKED: '/me/blocked',
     ME_RESTRICTED: '/me/restricted',
     SEARCH: '/search',
+    EXPORT: '/export',
+    IMPORT: '/import',
     PROFILE: '/:userName',
     FOLLOW: '/:userName/follow',
     FOLLOWERS: '/:userName/followers',
     FOLLOWING: '/:userName/following',
     BLOCK: '/:userName/block',
-    RESTRICT: '/:userName/restrict'
+    RESTRICT: '/:userName/restrict',
+    STATUS: '/:userName/status'
   },
   VIDEOS: {
     BASE: '/videos',

@@ -20,6 +20,7 @@ const configuredPassword = (role: keyof typeof SEED_PASSWORD_ENV): string | unde
 const restoreDemoAccount = async (email: string, password: string): Promise<void> => {
   const id = await userRepository.findIdByEmailIncludingDeleted(email)
   if (id && (await userRepository.restoreById(id, null))) logger.info('Reactivated demo account', { email })
+  if (id && (await userRepository.isDeactivated(id))) await userRepository.setDeactivated(id, false, null)
   const user = await userRepository.findByLogin(email)
   if (!user || (await comparePassword(password, user.passwordHash))) return
   await userRepository.updateById(user._id.toString(), { $set: { passwordHash: await hashPassword(password) } }, null)

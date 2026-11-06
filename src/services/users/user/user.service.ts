@@ -25,6 +25,7 @@ import { purgeProviderFiles } from '../../media/media/media-cleanup.service'
 import { USER_PUBLIC_FIELDS } from '../../../constants/users/user/user.constants'
 import type { UserSearchQueryDto } from '../../../dtos/users/user/user-search-query.dto'
 import type { UserSummaryResponseDto } from '../../../dtos/users/follow/user-summary-response.dto'
+import { AccountStatus } from '../../../enums/users/user/account-status.enum'
 import { getHiddenUserIds } from '../visibility/visibility.service'
 import { toUserSummaries } from '../follow/follow.service'
 
@@ -98,13 +99,20 @@ export const searchUsers = async (
 }
 
 /** Admin list with private fields (email, role). */
-export const listUsers = async (query: UserQueryDto): Promise<PageResult<UserResponseDto>> => {
+/** Search, role, and status filters of the admin users list (also used by the CSV export). */
+export const buildUserListFilter = (query: Pick<UserQueryDto, 'search' | 'role' | 'status'>): QueryFilter<User> => {
   const filter: QueryFilter<User> = {}
   if (query.role) filter.role = query.role
+  if (query.status) filter.deactivatedAt = query.status === AccountStatus.ACTIVE ? null : { $ne: null }
   if (query.search) {
     const pattern = new RegExp(escapeRegex(query.search), 'i')
     filter.$or = [{ userName: pattern }, { email: pattern }]
   }
-  const page = await userRepository.paginate<User>(filter, query)
+  return filter
+}
+
+/** Admin list with private fields (email, role, status), including deactivated accounts. */
+export const listUsers = async (query: UserQueryDto): Promise<PageResult<UserResponseDto>> => {
+  const page = await userRepository.paginate<User>(buildUserListFilter(query), query)
   return { items: page.items.map(toUserResponse), meta: page.meta }
 }

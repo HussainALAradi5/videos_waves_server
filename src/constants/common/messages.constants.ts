@@ -7,6 +7,7 @@ export const MESSAGES = {
   },
   AUTH: {
     TOKEN_MISSING: 'Authentication is required.',
+    ACCOUNT_DEACTIVATED: 'This account has been deactivated by an admin.',
     TOKEN_INVALID: 'Your session is invalid or has expired.',
     REFRESH_INVALID: 'The refresh token is invalid or has expired.',
     INVALID_CREDENTIALS: 'Invalid username, email, or password.',
@@ -26,7 +27,9 @@ export const MESSAGES = {
     USER_NAME_RULE: 'Username must be 3-30 characters: letters, numbers, dots, or underscores.',
     PASSWORD_RULE: 'Password must be 8-72 characters with upper and lower case letters and a number.',
     PASSWORDS_MISMATCH: 'New password and confirmation do not match.',
-    USER_NAME_RESERVED: 'This username is reserved.'
+    USER_NAME_RESERVED: 'This username is reserved.',
+    CANNOT_DEACTIVATE_SELF: 'You cannot deactivate your own account here.',
+    CANNOT_DEACTIVATE_ADMIN: 'Admin accounts cannot be deactivated.'
   },
   SOCIAL: {
     CANNOT_FOLLOW_SELF: 'You cannot follow yourself.',

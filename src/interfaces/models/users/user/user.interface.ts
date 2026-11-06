@@ -17,5 +17,8 @@ export interface User extends BaseEntity {
   followersCount: number
   followingCount: number
   videosCount: number
+  /** Set by an admin; hides the account and its content until reactivated. */
+  deactivatedAt: Date | null
+  deactivatedBy: Types.ObjectId | null
   tokenVersion: number
 }
