@@ -1,0 +1,13 @@
+import { z } from 'zod'
+import { emailSchema, imageUrlSchema, userNameSchema } from '../../../validations/users/user/user.validation'
+
+export const updateProfileSchema = z
+  .object({
+    userName: userNameSchema.optional(),
+    email: emailSchema.optional(),
+    image: imageUrlSchema.optional()
+  })
+  .strict()
+  .refine((dto) => Object.keys(dto).length > 0, { message: 'Provide at least one field to update.' })
+
+export type UpdateProfileDto = z.infer<typeof updateProfileSchema>

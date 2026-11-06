@@ -1,0 +1,12 @@
+node_modules
+dist
+coverage
+.env
+.env.local
+*.log
+storage/videos/*
+!storage/videos/.gitkeep
+.seed-credentials.local.json
+.DS_Store
+.vscode/*
+.idea
