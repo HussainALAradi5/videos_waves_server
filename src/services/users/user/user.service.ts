@@ -21,6 +21,11 @@ import { withTransaction } from '../../../utilities/database/transaction.utility
 import { toObjectId } from '../../../utilities/ids/object-id.utility'
 import { claimMedia, releaseMedia } from '../../media/media/media.service'
 import { purgeProviderFiles } from '../../media/media/media-cleanup.service'
+import { USER_PUBLIC_FIELDS } from '../../../constants/users/user/user.constants'
+import type { UserSearchQueryDto } from '../../../dtos/users/user/user-search-query.dto'
+import type { UserSummaryResponseDto } from '../../../dtos/users/follow/user-summary-response.dto'
+import { getHiddenUserIds } from '../visibility/visibility.service'
+import { toUserSummaries } from '../follow/follow.service'
 
 const findUserOrFail = async (userId: string) => {
   const user = await userRepository.findById(userId)
@@ -73,6 +78,19 @@ export const deactivateAccount = async (userId: string): Promise<void> => {
   await userRepository.incrementTokenVersion(userId)
 }
 
+/** Public people search; users hidden from the viewer by a block never appear. */
+export const searchUsers = async (
+  query: UserSearchQueryDto,
+  viewerId?: string
+): Promise<PageResult<UserSummaryResponseDto>> => {
+  const hidden = await getHiddenUserIds(viewerId)
+  const filter: QueryFilter<User> = hidden.length > 0 ? { _id: { $nin: hidden.map(toObjectId) } } : {}
+  if (query.search) filter.userName = new RegExp(escapeRegex(query.search), 'i')
+  const page = await userRepository.paginate<User>(filter, query, { projection: USER_PUBLIC_FIELDS })
+  return { items: await toUserSummaries(page.items, viewerId), meta: page.meta }
+}
+
+/** Admin list with private fields (email, role). */
 export const listUsers = async (query: UserQueryDto): Promise<PageResult<UserResponseDto>> => {
   const filter: QueryFilter<User> = {}
   if (query.role) filter.role = query.role

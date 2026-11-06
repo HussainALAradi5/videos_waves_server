@@ -1,8 +1,8 @@
 import { z } from 'zod'
-import { emailSchema, passwordSchema, userNameSchema } from '../../../validations/users/user/user.validation'
+import { emailSchema, newUserNameSchema, passwordSchema } from '../../../validations/users/user/user.validation'
 
 export const registerSchema = z.object({
-  userName: userNameSchema,
+  userName: newUserNameSchema,
   email: emailSchema,
   password: passwordSchema
 })

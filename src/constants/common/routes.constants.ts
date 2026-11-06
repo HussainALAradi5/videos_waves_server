@@ -20,7 +20,16 @@ export const ROUTES = {
     ROOT: '/',
     ME: '/me',
     ME_PASSWORD: '/me/password',
-    ME_AVATAR: '/me/avatar'
+    ME_AVATAR: '/me/avatar',
+    ME_BLOCKED: '/me/blocked',
+    ME_RESTRICTED: '/me/restricted',
+    SEARCH: '/search',
+    PROFILE: '/:userName',
+    FOLLOW: '/:userName/follow',
+    FOLLOWERS: '/:userName/followers',
+    FOLLOWING: '/:userName/following',
+    BLOCK: '/:userName/block',
+    RESTRICT: '/:userName/restrict'
   },
   VIDEOS: {
     BASE: '/videos',
@@ -32,7 +41,10 @@ export const ROUTES = {
   COMMENTS: {
     BASE: '/videos/:videoId/comments',
     ROOT: '/',
-    BY_ID: '/:commentId'
+    BY_ID: '/:commentId',
+    REPLIES: '/:commentId/replies',
+    RESTORE: '/:commentId/restore',
+    APPROVE: '/:commentId/approve'
   },
   ADMIN_REQUESTS: {
     BASE: '/admin-requests',

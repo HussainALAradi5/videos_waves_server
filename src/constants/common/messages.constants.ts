@@ -22,7 +22,15 @@ export const MESSAGES = {
     DEACTIVATED: 'Your account has been deactivated.',
     USER_NAME_RULE: 'Username must be 3-30 characters: letters, numbers, dots, or underscores.',
     PASSWORD_RULE: 'Password must be 8-72 characters with upper and lower case letters and a number.',
-    PASSWORDS_MISMATCH: 'New password and confirmation do not match.'
+    PASSWORDS_MISMATCH: 'New password and confirmation do not match.',
+    USER_NAME_RESERVED: 'This username is reserved.'
+  },
+  SOCIAL: {
+    CANNOT_FOLLOW_SELF: 'You cannot follow yourself.',
+    CANNOT_BLOCK_SELF: 'You cannot block yourself.',
+    CANNOT_RESTRICT_SELF: 'You cannot restrict yourself.',
+    UNBLOCK_FIRST: 'Unblock this account first.',
+    FOLLOWING_REQUIRED: 'Sign in and follow people to see their videos here.'
   },
   VIDEOS: {
     NOT_FOUND: 'Video not found.',
@@ -45,7 +53,9 @@ export const MESSAGES = {
   },
   COMMENTS: {
     NOT_FOUND: 'Comment not found.',
-    DELETED: 'Comment deleted.'
+    DELETED: 'Comment deleted.',
+    UNDO_EXPIRED: 'This comment can no longer be restored.',
+    NOT_PENDING: 'This comment does not need approval.'
   },
   ADMIN_REQUESTS: {
     NOT_FOUND: 'Admin request not found.',

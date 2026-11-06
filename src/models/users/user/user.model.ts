@@ -26,5 +26,6 @@ const userSchema = new Schema<User>({
 })
 
 userSchema.plugin(baseEntityPlugin, { codePrefix: USER_CODE_PREFIX })
+userSchema.index({ followersCount: -1 })
 
 export const UserModel = model<User>('User', userSchema)

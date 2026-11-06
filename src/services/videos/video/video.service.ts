@@ -16,7 +16,10 @@ import { commentRepository } from '../../../repositories/videos/comment/comment.
 import { userRepository } from '../../../repositories/users/user/user.repository'
 import { toVideoResponse } from '../../../mappers/videos/video/video.mapper'
 import { assertCanManage } from '../../../validations/common/ownership.validation'
-import { notFound } from '../../../utilities/errors/app-error.utility'
+import { notFound, unauthorized } from '../../../utilities/errors/app-error.utility'
+import { FeedScope } from '../../../enums/videos/video/feed-scope.enum'
+import { followRepository } from '../../../repositories/users/follow/follow.repository'
+import { getHiddenUserIds, isBlockedEitherWay } from '../../users/visibility/visibility.service'
 import { escapeRegex } from '../../../utilities/strings/escape-regex.utility'
 import { toObjectId } from '../../../utilities/ids/object-id.utility'
 import { withTransaction } from '../../../utilities/database/transaction.utility'
@@ -27,19 +30,38 @@ import { purgeProviderFiles } from '../../media/media/media-cleanup.service'
 
 const VIDEO_POPULATE = [{ path: 'owner', select: USER_PUBLIC_FIELDS }, { path: 'media' }]
 
-/** Loads an active video or throws 404; shared by every video, like, and comment workflow. */
-export const findVideoOrFail = async (videoId: string) => {
+/**
+ * Loads an active video or throws 404; shared by every video, like, and comment workflow. With a
+ * viewer, a video whose owner and viewer are blocked either way also looks missing.
+ */
+export const findVideoOrFail = async (videoId: string, viewerId?: string) => {
   const video = await videoRepository.findById(videoId)
   if (!video) throw notFound(MESSAGES.VIDEOS.NOT_FOUND)
+  if (viewerId && (await isBlockedEitherWay(video.owner.toString(), viewerId))) throw notFound(MESSAGES.VIDEOS.NOT_FOUND)
   return video
 }
 
-const findVideoWithOwnerOrFail = async (videoId: string): Promise<VideoWithOwner> => {
+const findVideoWithOwnerOrFail = async (videoId: string, viewerId?: string): Promise<VideoWithOwner> => {
   const video = await videoRepository
     .findById(videoId)
     .populate<{ owner: PublicUserSource; media: Media }>(VIDEO_POPULATE)
   if (!video) throw notFound(MESSAGES.VIDEOS.NOT_FOUND)
+  if (viewerId && (await isBlockedEitherWay(video.owner._id.toString(), viewerId))) {
+    throw notFound(MESSAGES.VIDEOS.NOT_FOUND)
+  }
   return video
+}
+
+/** Which owners a feed may show: hidden users never; with `following`, only people the viewer follows. */
+const buildOwnerFilter = async (query: VideoQueryDto, viewerId?: string): Promise<QueryFilter<Video>['owner']> => {
+  const hidden = (await getHiddenUserIds(viewerId)).map(toObjectId)
+  const condition: Record<string, unknown> = hidden.length > 0 ? { $nin: hidden } : {}
+  if (query.scope === FeedScope.FOLLOWING) {
+    if (!viewerId) throw unauthorized(MESSAGES.SOCIAL.FOLLOWING_REQUIRED)
+    condition.$in = [...(await followRepository.findTargetIds(viewerId))].map(toObjectId)
+  }
+  if (query.ownerId) condition.$in = [toObjectId(query.ownerId)]
+  return Object.keys(condition).length > 0 ? condition : undefined
 }
 
 const isLikedBy = async (videoId: string, viewerId?: string): Promise<boolean> =>
@@ -47,7 +69,8 @@ const isLikedBy = async (videoId: string, viewerId?: string): Promise<boolean> =
 
 export const listVideos = async (query: VideoQueryDto, viewerId?: string): Promise<PageResult<VideoResponseDto>> => {
   const filter: QueryFilter<Video> = {}
-  if (query.ownerId) filter.owner = toObjectId(query.ownerId)
+  const owner = await buildOwnerFilter(query, viewerId)
+  if (owner) filter.owner = owner
   if (query.search) filter.title = new RegExp(escapeRegex(query.search), 'i')
 
   const page = await videoRepository.paginate<VideoWithOwner>(filter, query, { populate: VIDEO_POPULATE })
@@ -61,7 +84,7 @@ export const listVideos = async (query: VideoQueryDto, viewerId?: string): Promi
 }
 
 export const getVideo = async (videoId: string, viewerId?: string): Promise<VideoResponseDto> => {
-  const [video, isLiked] = await Promise.all([findVideoWithOwnerOrFail(videoId), isLikedBy(videoId, viewerId)])
+  const [video, isLiked] = await Promise.all([findVideoWithOwnerOrFail(videoId, viewerId), isLikedBy(videoId, viewerId)])
   return toVideoResponse(video, isLiked)
 }
 

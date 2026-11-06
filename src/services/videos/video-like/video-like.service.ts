@@ -12,7 +12,7 @@ const buildLikeResponse = async (videoId: string, isLiked: boolean): Promise<Vid
 
 /** Idempotent: liking twice keeps one like and counts it once. The like and its counter commit together. */
 export const likeVideo = async (videoId: string, actor: AuthUser): Promise<VideoLikeResponseDto> => {
-  await findVideoOrFail(videoId)
+  await findVideoOrFail(videoId, actor.id)
   await withTransaction(async () => {
     if (await videoLikeRepository.likeOnce(videoId, actor.id)) {
       await videoRepository.incrementCounter(videoId, 'likesCount', 1)
@@ -23,7 +23,7 @@ export const likeVideo = async (videoId: string, actor: AuthUser): Promise<Video
 
 /** Idempotent: unliking a video that is not liked changes nothing. */
 export const unlikeVideo = async (videoId: string, actor: AuthUser): Promise<VideoLikeResponseDto> => {
-  await findVideoOrFail(videoId)
+  await findVideoOrFail(videoId, actor.id)
   await withTransaction(async () => {
     if (await videoLikeRepository.unlike(videoId, actor.id)) {
       await videoRepository.incrementCounter(videoId, 'likesCount', -1)
