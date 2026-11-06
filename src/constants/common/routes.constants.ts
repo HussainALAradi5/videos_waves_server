@@ -38,7 +38,8 @@ export const ROUTES = {
     FOLLOWING: '/:userName/following',
     BLOCK: '/:userName/block',
     RESTRICT: '/:userName/restrict',
-    STATUS: '/:userName/status'
+    STATUS: '/:userName/status',
+    ROLE: '/:userName/role'
   },
   VIDEOS: {
     BASE: '/videos',

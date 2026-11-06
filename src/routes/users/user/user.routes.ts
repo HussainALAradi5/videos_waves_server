@@ -8,9 +8,11 @@ import * as followController from '../../../controllers/users/follow/follow.cont
 import * as blockController from '../../../controllers/users/block/block.controller'
 import * as restrictionController from '../../../controllers/users/restriction/restriction.controller'
 import * as settingsController from '../../../controllers/users/settings/settings.controller'
+import * as userRoleController from '../../../controllers/users/user-role/user-role.controller'
 import * as accountStatusController from '../../../controllers/users/account-status/account-status.controller'
 import * as userTransferController from '../../../controllers/users/user-transfer/user-transfer.controller'
 import { importUsersSchema } from '../../../dtos/users/user/import-users.dto'
+import { updateUserRoleSchema } from '../../../dtos/users/user-role/update-user-role.dto'
 import { updateAccountStatusSchema } from '../../../dtos/users/account-status/update-account-status.dto'
 import { updateSettingsSchema } from '../../../dtos/users/settings/update-settings.dto'
 import { updateProfileSchema } from '../../../dtos/users/user/update-profile.dto'
@@ -72,4 +74,11 @@ userRoutes.patch(
   authorize(Role.ADMIN),
   validate({ params: userNameParamsSchema, body: updateAccountStatusSchema }),
   accountStatusController.setAccountStatus
+)
+userRoutes.patch(
+  U.ROLE,
+  authenticate,
+  authorize(Role.ADMIN),
+  validate({ params: userNameParamsSchema, body: updateUserRoleSchema }),
+  userRoleController.setUserRole
 )

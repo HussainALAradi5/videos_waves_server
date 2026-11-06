@@ -30,6 +30,7 @@ export const MESSAGES = {
     PASSWORD_RULE: 'Password must be 8-72 characters with upper and lower case letters and a number.',
     PASSWORDS_MISMATCH: 'New password and confirmation do not match.',
     USER_NAME_RESERVED: 'This username is reserved.',
+    CANNOT_CHANGE_OWN_ROLE: 'You cannot change your own role. Ask another admin.',
     CANNOT_DEACTIVATE_SELF: 'You cannot deactivate your own account here.',
     CANNOT_DEACTIVATE_ADMIN: 'Admin accounts cannot be deactivated.'
   },
