@@ -7,7 +7,8 @@ services:
     plan: free
     region: frankfurt
     branch: main
-    buildCommand: npm ci && npm run build
+    # NODE_ENV=production would skip devDependencies; the build needs the pinned TypeScript and types.
+    buildCommand: npm ci --include=dev && npm run build
     # Migrations and the idempotent demo seed run before each start, which also restores demo passwords.
     startCommand: npm run migrate:prod && npm run seed:prod && npm start
     healthCheckPath: /health
