@@ -18,7 +18,14 @@ export const seedUsers = async (): Promise<Record<string, string>> => {
     const password = env[seed.passwordEnv] || generatePassword()
     const id = new Types.ObjectId()
     await userRepository.create(
-      { _id: id, userName: seed.userName, email: seed.email, role: seed.role, passwordHash: await hashPassword(password) },
+      {
+        _id: id,
+        userName: seed.userName,
+        email: seed.email,
+        role: seed.role,
+        gender: seed.gender,
+        passwordHash: await hashPassword(password)
+      },
       id.toString()
     )
     created[seed.email] = password

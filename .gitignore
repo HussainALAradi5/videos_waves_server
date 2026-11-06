@@ -4,8 +4,8 @@ coverage
 .env
 .env.local
 *.log
-storage/videos/*
-!storage/videos/.gitkeep
+storage/media/*
+!storage/media/.gitkeep
 .seed-credentials.local.json
 .DS_Store
 .vscode/*

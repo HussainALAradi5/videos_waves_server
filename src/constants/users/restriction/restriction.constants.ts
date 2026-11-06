@@ -1,0 +1,1 @@
+export const RESTRICTION_CODE_PREFIX = 'RST'

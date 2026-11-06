@@ -1,7 +1,7 @@
 import { Schema, model } from 'mongoose'
 import { VIDEO_LIKE_CODE_PREFIX } from '../../../constants/videos/video/video.constants'
 import type { VideoLike } from '../../../interfaces/models/videos/video-like/video-like.interface'
-import { baseEntityPlugin } from '../../base/base-entity.plugin'
+import { baseEntityPlugin } from '../../base/base-entity.model'
 
 const videoLikeSchema = new Schema<VideoLike>({
   video: { type: Schema.Types.ObjectId, ref: 'Video', required: true },

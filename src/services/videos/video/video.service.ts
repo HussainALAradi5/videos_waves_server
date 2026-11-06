@@ -5,8 +5,7 @@ import type { CreateVideoDto } from '../../../dtos/videos/video/create-video.dto
 import type { UpdateVideoDto } from '../../../dtos/videos/video/update-video.dto'
 import type { VideoQueryDto } from '../../../dtos/videos/video/video-query.dto'
 import type { VideoResponseDto } from '../../../dtos/videos/video/video-response.dto'
-import type { UploadedVideoFileDto } from '../../../dtos/videos/video/uploaded-video-file.dto'
-import type { AuthUser } from '../../../interfaces/auth/auth-user.interface'
+import type { AuthUser } from '../../../interfaces/users/auth/auth-user.interface'
 import type { Video } from '../../../interfaces/models/videos/video/video.interface'
 import type { VideoWithOwner } from '../../../interfaces/models/videos/video/video-with-owner.interface'
 import type { PublicUserSource } from '../../../interfaces/models/users/user/public-user-source.interface'
@@ -14,25 +13,55 @@ import type { PageResult } from '../../../interfaces/common/pagination/page-resu
 import { videoRepository } from '../../../repositories/videos/video/video.repository'
 import { videoLikeRepository } from '../../../repositories/videos/video-like/video-like.repository'
 import { commentRepository } from '../../../repositories/videos/comment/comment.repository'
+import { userRepository } from '../../../repositories/users/user/user.repository'
 import { toVideoResponse } from '../../../mappers/videos/video/video.mapper'
 import { assertCanManage } from '../../../validations/common/ownership.validation'
-import { notFound } from '../../../utilities/errors/app-error.utility'
+import { notFound, unauthorized } from '../../../utilities/errors/app-error.utility'
+import { FeedScope } from '../../../enums/videos/video/feed-scope.enum'
+import { followRepository } from '../../../repositories/users/follow/follow.repository'
+import { getHiddenUserIds, isBlockedEitherWay } from '../../users/visibility/visibility.service'
 import { escapeRegex } from '../../../utilities/strings/escape-regex.utility'
 import { toObjectId } from '../../../utilities/ids/object-id.utility'
+import { withTransaction } from '../../../utilities/database/transaction.utility'
+import { MediaKind } from '../../../enums/media/media/media-kind.enum'
+import type { Media } from '../../../interfaces/models/media/media/media.interface'
+import { claimMedia, releaseMedia } from '../../media/media/media.service'
+import { purgeProviderFiles } from '../../media/media/media-cleanup.service'
 
-const OWNER_POPULATE = { path: 'owner', select: USER_PUBLIC_FIELDS }
+const VIDEO_POPULATE = [{ path: 'owner', select: USER_PUBLIC_FIELDS }, { path: 'media' }]
 
-/** Loads an active video or throws 404; shared by every video, like, and comment workflow. */
-export const findVideoOrFail = async (videoId: string) => {
+/**
+ * Loads an active video or throws 404; shared by every video, like, and comment workflow. With a
+ * viewer, a video whose owner and viewer are blocked either way also looks missing.
+ */
+export const findVideoOrFail = async (videoId: string, viewerId?: string) => {
   const video = await videoRepository.findById(videoId)
   if (!video) throw notFound(MESSAGES.VIDEOS.NOT_FOUND)
+  if (viewerId && (await isBlockedEitherWay(video.owner.toString(), viewerId))) throw notFound(MESSAGES.VIDEOS.NOT_FOUND)
   return video
 }
 
-const findVideoWithOwnerOrFail = async (videoId: string): Promise<VideoWithOwner> => {
-  const video = await videoRepository.findById(videoId).populate<{ owner: PublicUserSource }>(OWNER_POPULATE)
+const findVideoWithOwnerOrFail = async (videoId: string, viewerId?: string): Promise<VideoWithOwner> => {
+  const video = await videoRepository
+    .findById(videoId)
+    .populate<{ owner: PublicUserSource; media: Media }>(VIDEO_POPULATE)
   if (!video) throw notFound(MESSAGES.VIDEOS.NOT_FOUND)
+  if (viewerId && (await isBlockedEitherWay(video.owner._id.toString(), viewerId))) {
+    throw notFound(MESSAGES.VIDEOS.NOT_FOUND)
+  }
   return video
+}
+
+/** Which owners a feed may show: hidden users never; with `following`, only people the viewer follows. */
+const buildOwnerFilter = async (query: VideoQueryDto, viewerId?: string): Promise<QueryFilter<Video>['owner']> => {
+  const hidden = (await getHiddenUserIds(viewerId)).map(toObjectId)
+  const condition: Record<string, unknown> = hidden.length > 0 ? { $nin: hidden } : {}
+  if (query.scope === FeedScope.FOLLOWING) {
+    if (!viewerId) throw unauthorized(MESSAGES.SOCIAL.FOLLOWING_REQUIRED)
+    condition.$in = [...(await followRepository.findTargetIds(viewerId))].map(toObjectId)
+  }
+  if (query.ownerId) condition.$in = [toObjectId(query.ownerId)]
+  return Object.keys(condition).length > 0 ? condition : undefined
 }
 
 const isLikedBy = async (videoId: string, viewerId?: string): Promise<boolean> =>
@@ -40,10 +69,11 @@ const isLikedBy = async (videoId: string, viewerId?: string): Promise<boolean> =
 
 export const listVideos = async (query: VideoQueryDto, viewerId?: string): Promise<PageResult<VideoResponseDto>> => {
   const filter: QueryFilter<Video> = {}
-  if (query.ownerId) filter.owner = toObjectId(query.ownerId)
+  const owner = await buildOwnerFilter(query, viewerId)
+  if (owner) filter.owner = owner
   if (query.search) filter.title = new RegExp(escapeRegex(query.search), 'i')
 
-  const page = await videoRepository.paginate<VideoWithOwner>(filter, query, { populate: OWNER_POPULATE })
+  const page = await videoRepository.paginate<VideoWithOwner>(filter, query, { populate: VIDEO_POPULATE })
   const likedIds = viewerId
     ? await videoLikeRepository.findLikedVideoIds(viewerId, page.items.map((video) => video._id))
     : new Set<string>()
@@ -54,19 +84,21 @@ export const listVideos = async (query: VideoQueryDto, viewerId?: string): Promi
 }
 
 export const getVideo = async (videoId: string, viewerId?: string): Promise<VideoResponseDto> => {
-  const [video, isLiked] = await Promise.all([findVideoWithOwnerOrFail(videoId), isLikedBy(videoId, viewerId)])
+  const [video, isLiked] = await Promise.all([findVideoWithOwnerOrFail(videoId, viewerId), isLikedBy(videoId, viewerId)])
   return toVideoResponse(video, isLiked)
 }
 
-export const createVideo = async (
-  dto: CreateVideoDto,
-  file: UploadedVideoFileDto,
-  actor: AuthUser
-): Promise<VideoResponseDto> => {
-  const video = await videoRepository.create(
-    { title: dto.title, description: dto.description, ...file, owner: toObjectId(actor.id) },
-    actor.id
-  )
+/** Publishes an uploaded file: claims the caller's pending video media and creates the video in one transaction. */
+export const createVideo = async (dto: CreateVideoDto, actor: AuthUser): Promise<VideoResponseDto> => {
+  const video = await withTransaction(async () => {
+    await claimMedia([dto.mediaId], MediaKind.VIDEO, actor)
+    const created = await videoRepository.create(
+      { title: dto.title, description: dto.description, media: toObjectId(dto.mediaId), owner: toObjectId(actor.id) },
+      actor.id
+    )
+    await userRepository.incrementCounter(actor.id, 'videosCount', 1)
+    return created
+  })
   return getVideo(video._id.toString(), actor.id)
 }
 
@@ -77,21 +109,21 @@ export const updateVideo = async (videoId: string, dto: UpdateVideoDto, actor: A
   return getVideo(videoId, actor.id)
 }
 
-/** Soft-deletes the video and its comments, and removes its likes. The file is kept for audit. */
+/** Soft-deletes the video, its comments, and its media, and removes its likes; then deletes the CDN file. */
 export const deleteVideo = async (videoId: string, actor: AuthUser): Promise<void> => {
   const video = await findVideoOrFail(videoId)
   assertCanManage(video.owner, actor, true)
-  await videoRepository.softDeleteById(videoId, actor.id)
-  await Promise.all([
-    commentRepository.softDeleteAllForVideo(videoId, actor.id),
-    videoLikeRepository.removeAllForVideo(videoId)
-  ])
+  await withTransaction(async () => {
+    await videoRepository.softDeleteById(videoId, actor.id)
+    await commentRepository.softDeleteAllForVideo(videoId, actor.id)
+    await videoLikeRepository.removeAllForVideo(videoId)
+    await releaseMedia([video.media.toString()], actor.id)
+    await userRepository.incrementCounter(video.owner.toString(), 'videosCount', -1)
+  })
+  await purgeProviderFiles([video.media.toString()])
 }
 
 export const recordView = async (videoId: string): Promise<void> => {
   await findVideoOrFail(videoId)
   await videoRepository.incrementCounter(videoId, 'viewsCount', 1)
 }
-
-/** Resolves a stored file name to an active video so deleted videos are never streamed. */
-export const isStreamable = async (fileName: string): Promise<boolean> => videoRepository.exists({ fileName })

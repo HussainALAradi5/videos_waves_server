@@ -1,4 +1,4 @@
-import type { AuthUser } from '../../interfaces/auth/auth-user.interface'
+import type { AuthUser } from '../../interfaces/users/auth/auth-user.interface'
 import type { ValidatedRequestData } from '../../interfaces/common/requests/validated-request-data.interface'
 
 declare global {

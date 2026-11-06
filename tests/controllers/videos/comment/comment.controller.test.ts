@@ -64,4 +64,50 @@ describe('comment endpoints', () => {
     ).body.data
     await api().delete(`/videos/${second.id}/comments/${comment.id}`).set(...bearer(author)).expect(404)
   })
+
+  it('threads replies one level deep and marks the video owner', async () => {
+    const owner = await registerUser('creator')
+    const fan = await registerUser('replyfan')
+    const video = await uploadVideo(owner)
+    const base = `/videos/${video.id}/comments`
+    const top = (await api().post(base).set(...bearer(fan)).send({ content: 'Love it' }).expect(201)).body.data
+    const reply = (await api().post(base).set(...bearer(owner)).send({ content: 'Thanks!', parentId: top.id }).expect(201)).body.data
+    expect(reply).toMatchObject({ parentId: top.id, isVideoOwner: true })
+    // A reply to a reply joins the same top-level thread.
+    const nested = (await api().post(base).set(...bearer(fan)).send({ content: 'Welcome', parentId: reply.id }).expect(201)).body.data
+    expect(nested.parentId).toBe(top.id)
+
+    const list = (await api().get(base).expect(200)).body.data
+    expect(list).toHaveLength(1)
+    expect(list[0]).toMatchObject({ repliesCount: 2, isVideoOwner: false })
+    const replies = (await api().get(`${base}/${top.id}/replies`).expect(200)).body.data
+    expect(replies.map((comment: { content: string }) => comment.content)).toEqual(['Welcome', 'Thanks!'])
+    expect((await api().get(`/videos/${video.id}`)).body.data.commentsCount).toBe(3)
+  })
+
+  it('flags edits only when the text changes', async () => {
+    const author = await registerUser('editor')
+    const video = await uploadVideo(author)
+    const path = (id: string) => `/videos/${video.id}/comments/${id}`
+    const comment = (await api().post(`/videos/${video.id}/comments`).set(...bearer(author)).send({ content: 'One' })).body.data
+    expect((await api().patch(path(comment.id)).set(...bearer(author)).send({ content: 'One' })).body.data.isEdited).toBe(false)
+    expect((await api().patch(path(comment.id)).set(...bearer(author)).send({ content: 'Two' })).body.data.isEdited).toBe(true)
+  })
+
+  it('lets the video owner delete, and only the deleter undo, a whole thread', async () => {
+    const owner = await registerUser('postowner')
+    const fan = await registerUser('chatty')
+    const video = await uploadVideo(owner)
+    const base = `/videos/${video.id}/comments`
+    const top = (await api().post(base).set(...bearer(fan)).send({ content: 'Top' })).body.data
+    await api().post(base).set(...bearer(fan)).send({ content: 'Reply', parentId: top.id })
+
+    await api().delete(`${base}/${top.id}`).set(...bearer(owner)).expect(200)
+    expect((await api().get(`/videos/${video.id}`)).body.data.commentsCount).toBe(0)
+    await api().patch(`${base}/${top.id}/restore`).set(...bearer(fan)).expect(403)
+    const restored = await api().patch(`${base}/${top.id}/restore`).set(...bearer(owner)).expect(200)
+    expect(restored.body.data.repliesCount).toBe(1)
+    expect((await api().get(`/videos/${video.id}`)).body.data.commentsCount).toBe(2)
+    expect((await api().get(`${base}/${top.id}/replies`)).body.data).toHaveLength(1)
+  })
 })

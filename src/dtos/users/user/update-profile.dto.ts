@@ -1,11 +1,12 @@
 import { z } from 'zod'
-import { emailSchema, imageUrlSchema, userNameSchema } from '../../../validations/users/user/user.validation'
+import { bioSchema, emailSchema, genderSchema, newUserNameSchema } from '../../../validations/users/user/user.validation'
 
 export const updateProfileSchema = z
   .object({
-    userName: userNameSchema.optional(),
+    userName: newUserNameSchema.optional(),
     email: emailSchema.optional(),
-    image: imageUrlSchema.optional()
+    bio: bioSchema.optional(),
+    gender: genderSchema.optional()
   })
   .strict()
   .refine((dto) => Object.keys(dto).length > 0, { message: 'Provide at least one field to update.' })

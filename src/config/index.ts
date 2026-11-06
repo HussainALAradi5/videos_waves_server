@@ -13,6 +13,10 @@ const csv = z
       .filter(Boolean)
   )
 
+/** Blank values in .env (KEY=) count as unset. */
+const optional = <T extends z.ZodType>(schema: T) =>
+  z.preprocess((value) => (value === '' ? undefined : value), schema.optional())
+
 const environmentSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(5000),
@@ -24,10 +28,24 @@ const environmentSchema = z.object({
   BCRYPT_SALT_ROUNDS: z.coerce.number().int().min(10).max(15).default(12),
   CORS_ORIGINS: csv,
   PUBLIC_BASE_URL: z.url(),
-  STORAGE_VIDEOS_DIR: z.string().default('storage/videos'),
-  UPLOAD_MAX_VIDEO_MB: z.coerce.number().int().positive().default(100),
-  SEED_ADMIN_PASSWORD: z.string().optional(),
-  SEED_USER_PASSWORD: z.string().optional()
+  MEDIA_PROVIDER: z.enum(['imagekit', 'local']).default('local'),
+  IMAGEKIT_PUBLIC_KEY: optional(z.string()),
+  IMAGEKIT_PRIVATE_KEY: optional(z.string()),
+  IMAGEKIT_URL_ENDPOINT: optional(z.url()),
+  /** Signs local uploads and private local URLs; only used when MEDIA_PROVIDER=local. */
+  MEDIA_LOCAL_SECRET: optional(z.string().min(32)),
+  MEDIA_LOCAL_DIR: z.string().default('storage/media'),
+  UPLOAD_MAX_VIDEO_MB: z.coerce.number().int().positive().max(100).default(100),
+  SEED_ADMIN_PASSWORD: optional(z.string()),
+  SEED_USER_PASSWORD: optional(z.string())
+}).superRefine((value, context) => {
+  const required =
+    value.MEDIA_PROVIDER === 'imagekit'
+      ? (['IMAGEKIT_PUBLIC_KEY', 'IMAGEKIT_PRIVATE_KEY', 'IMAGEKIT_URL_ENDPOINT'] as const)
+      : (['MEDIA_LOCAL_SECRET'] as const)
+  for (const key of required) {
+    if (!value[key]) context.addIssue({ code: 'custom', path: [key], message: `Required when MEDIA_PROVIDER=${value.MEDIA_PROVIDER}` })
+  }
 })
 
 export type Environment = z.infer<typeof environmentSchema>

@@ -7,7 +7,7 @@ import type { CreateAdminRequestDto } from '../../../dtos/users/admin-request/cr
 import type { DecideAdminRequestDto } from '../../../dtos/users/admin-request/decide-admin-request.dto'
 import type { AdminRequestQueryDto } from '../../../dtos/users/admin-request/admin-request-query.dto'
 import type { AdminRequestResponseDto } from '../../../dtos/users/admin-request/admin-request-response.dto'
-import type { AuthUser } from '../../../interfaces/auth/auth-user.interface'
+import type { AuthUser } from '../../../interfaces/users/auth/auth-user.interface'
 import type { AdminRequest } from '../../../interfaces/models/users/admin-request/admin-request.interface'
 import type { AdminRequestWithRequester } from '../../../interfaces/models/users/admin-request/admin-request-with-requester.interface'
 import type { PublicUserSource } from '../../../interfaces/models/users/user/public-user-source.interface'
@@ -18,6 +18,7 @@ import { toAdminRequestResponse } from '../../../mappers/users/admin-request/adm
 import { assertCanManage } from '../../../validations/common/ownership.validation'
 import { conflict, notFound } from '../../../utilities/errors/app-error.utility'
 import { toObjectId } from '../../../utilities/ids/object-id.utility'
+import { withTransaction } from '../../../utilities/database/transaction.utility'
 
 const REQUESTER_POPULATE = { path: 'requester', select: USER_PUBLIC_FIELDS }
 
@@ -74,21 +75,23 @@ export const getAdminRequest = async (requestId: string, actor: AuthUser): Promi
   return getRequestResponse(requestId)
 }
 
-/** pending -> accepted | rejected. Accepting promotes the requester to admin. */
+/** pending -> accepted | rejected. Accepting promotes the requester to admin in the same transaction. */
 export const decideAdminRequest = async (
   requestId: string,
   dto: DecideAdminRequestDto,
   actor: AuthUser
 ): Promise<AdminRequestResponseDto> => {
-  const decided = await adminRequestRepository.transitionFromPending(
-    requestId,
-    { status: dto.status, decidedBy: toObjectId(actor.id), decidedAt: new Date(), decisionNote: dto.note ?? null },
-    actor.id
-  )
-  if (!decided) return throwTransitionFailure(requestId)
-  if (dto.status === AdminRequestStatus.ACCEPTED) {
-    await userRepository.updateById(decided.requester.toString(), { $set: { role: Role.ADMIN } }, actor.id)
-  }
+  await withTransaction(async () => {
+    const decided = await adminRequestRepository.transitionFromPending(
+      requestId,
+      { status: dto.status, decidedBy: toObjectId(actor.id), decidedAt: new Date(), decisionNote: dto.note ?? null },
+      actor.id
+    )
+    if (!decided) return throwTransitionFailure(requestId)
+    if (dto.status === AdminRequestStatus.ACCEPTED) {
+      await userRepository.updateById(decided.requester.toString(), { $set: { role: Role.ADMIN } }, actor.id)
+    }
+  })
   return getRequestResponse(requestId)
 }
 

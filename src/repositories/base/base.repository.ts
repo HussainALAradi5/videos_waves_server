@@ -1,4 +1,4 @@
-import type { HydratedDocument, Model, QueryFilter, UpdateQuery } from 'mongoose'
+import type { HydratedDocument, Model, QueryFilter, Types, UpdateQuery } from 'mongoose'
 import type { BaseEntity } from '../../interfaces/models/base/base-entity.interface'
 import type { PageRequestDto } from '../../dtos/common/pagination/page-request.dto'
 import type { PageResult } from '../../interfaces/common/pagination/page-result.interface'
@@ -24,6 +24,11 @@ export abstract class BaseRepository<T extends BaseEntity> {
     return this.model.findOne(this.active({ _id: toObjectId(id) } as QueryFilter<T>), projection)
   }
 
+  /** Active documents by id, in one query (order is not guaranteed). */
+  findManyByIds(ids: (string | Types.ObjectId)[]) {
+    return this.model.find(this.active({ _id: { $in: ids.map((id) => toObjectId(id.toString())) } } as QueryFilter<T>))
+  }
+
   async exists(filter: QueryFilter<T>): Promise<boolean> {
     return (await this.model.exists(this.active(filter))) !== null
   }
@@ -40,6 +45,21 @@ export abstract class BaseRepository<T extends BaseEntity> {
     const actor = toOptionalObjectId(actorId)
     const result = await this.model.updateOne(this.active({ _id: toObjectId(id) } as QueryFilter<T>), {
       $set: { deletedAt: new Date(), deletedBy: actor, updatedBy: actor }
+    } as UpdateQuery<T>)
+    return result.modifiedCount === 1
+  }
+
+  /** Adds `amount` to a numeric counter; counters never drop below zero, even under concurrent decrements. */
+  async incrementCounter(id: string, counter: keyof T & string, amount: number): Promise<void> {
+    const guard = amount < 0 ? { [counter]: { $gte: -amount } } : {}
+    await this.model.updateOne({ _id: toObjectId(id), ...guard } as QueryFilter<T>, {
+      $inc: { [counter]: amount }
+    } as UpdateQuery<T>)
+  }
+
+  async restoreById(id: string, actorId: string | null): Promise<boolean> {
+    const result = await this.model.updateOne({ _id: toObjectId(id), deletedAt: { $ne: null } } as QueryFilter<T>, {
+      $set: { deletedAt: null, deletedBy: null, updatedBy: toOptionalObjectId(actorId) }
     } as UpdateQuery<T>)
     return result.modifiedCount === 1
   }

@@ -22,7 +22,7 @@ const toAppError = (error: unknown): AppError => {
   if (error instanceof AppError) return error
   if (error instanceof MulterError) {
     return error.code === 'LIMIT_FILE_SIZE'
-      ? new AppError(ErrorCode.PAYLOAD_TOO_LARGE, MESSAGES.VIDEOS.FILE_TOO_LARGE)
+      ? new AppError(ErrorCode.PAYLOAD_TOO_LARGE, MESSAGES.MEDIA.TOO_LARGE)
       : new AppError(ErrorCode.VALIDATION_ERROR, error.message)
   }
   if (isDuplicateKeyError(error)) return new AppError(ErrorCode.CONFLICT, MESSAGES.COMMON.VALIDATION_FAILED)

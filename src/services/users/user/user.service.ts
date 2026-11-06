@@ -13,6 +13,20 @@ import { comparePassword, hashPassword } from '../../../utilities/security/passw
 import { badRequest, notFound } from '../../../utilities/errors/app-error.utility'
 import { escapeRegex } from '../../../utilities/strings/escape-regex.utility'
 import { assertIdentityAvailable, buildAuthResponse } from '../auth/auth.service'
+import { revokeAllSessions } from '../auth/session.service'
+import type { UpdateAvatarDto } from '../../../dtos/users/user/update-avatar.dto'
+import type { AuthUser } from '../../../interfaces/users/auth/auth-user.interface'
+import { MediaKind } from '../../../enums/media/media/media-kind.enum'
+import { toMediaResponse } from '../../../mappers/media/media/media.mapper'
+import { withTransaction } from '../../../utilities/database/transaction.utility'
+import { toObjectId } from '../../../utilities/ids/object-id.utility'
+import { claimMedia, releaseMedia } from '../../media/media/media.service'
+import { purgeProviderFiles } from '../../media/media/media-cleanup.service'
+import { USER_PUBLIC_FIELDS } from '../../../constants/users/user/user.constants'
+import type { UserSearchQueryDto } from '../../../dtos/users/user/user-search-query.dto'
+import type { UserSummaryResponseDto } from '../../../dtos/users/follow/user-summary-response.dto'
+import { getHiddenUserIds } from '../visibility/visibility.service'
+import { toUserSummaries } from '../follow/follow.service'
 
 const findUserOrFail = async (userId: string) => {
   const user = await userRepository.findById(userId)
@@ -30,26 +44,60 @@ export const updateProfile = async (userId: string, dto: UpdateProfileDto): Prom
   return toUserResponse(user)
 }
 
-/** Changes the password, revokes older sessions, and returns a fresh session for this device. */
-export const changePassword = async (userId: string, dto: ChangePasswordDto): Promise<AuthResponseDto> => {
+/** Sets (or with `mediaId: null`, removes) the avatar; the previous avatar file is deleted after commit. */
+export const updateAvatar = async (dto: UpdateAvatarDto, actor: AuthUser): Promise<UserResponseDto> => {
+  const current = await findUserOrFail(actor.id)
+  const previousMediaId = current.avatar?.toString() ?? null
+  const user = await withTransaction(async () => {
+    const [media] = dto.mediaId ? await claimMedia([dto.mediaId], MediaKind.AVATAR, actor) : []
+    if (previousMediaId) await releaseMedia([previousMediaId], actor.id)
+    const avatar = media ? { avatar: toObjectId(media._id.toString()), avatarUrl: toMediaResponse(media).url } : null
+    return userRepository.updateById(actor.id, { $set: avatar ?? { avatar: null, avatarUrl: null } }, actor.id)
+  })
+  if (!user) throw notFound(MESSAGES.USERS.NOT_FOUND)
+  if (previousMediaId) await purgeProviderFiles([previousMediaId])
+  return toUserResponse(user)
+}
+
+/** Changes the password, signs every device out, and returns a fresh session for this one. */
+export const changePassword = async (
+  userId: string,
+  dto: ChangePasswordDto,
+  userAgent: string
+): Promise<AuthResponseDto> => {
   const user = await userRepository.findByIdWithSecrets(userId)
   if (!user) throw notFound(MESSAGES.USERS.NOT_FOUND)
   if (!(await comparePassword(dto.currentPassword, user.passwordHash))) {
     throw badRequest(MESSAGES.USERS.CURRENT_PASSWORD_INCORRECT)
   }
   user.passwordHash = await hashPassword(dto.newPassword)
-  user.tokenVersion += 1
   user.updatedBy = user._id
   await user.save()
-  return buildAuthResponse(user)
+  await revokeAllSessions(userId)
+  const refreshed = await userRepository.findByIdWithSecrets(userId)
+  if (!refreshed) throw notFound(MESSAGES.USERS.NOT_FOUND)
+  return buildAuthResponse(refreshed, userAgent)
 }
 
 export const deactivateAccount = async (userId: string): Promise<void> => {
   const isDeleted = await userRepository.softDeleteById(userId, userId)
   if (!isDeleted) throw notFound(MESSAGES.USERS.NOT_FOUND)
-  await userRepository.incrementTokenVersion(userId)
+  await revokeAllSessions(userId)
 }
 
+/** Public people search; users hidden from the viewer by a block never appear. */
+export const searchUsers = async (
+  query: UserSearchQueryDto,
+  viewerId?: string
+): Promise<PageResult<UserSummaryResponseDto>> => {
+  const hidden = await getHiddenUserIds(viewerId)
+  const filter: QueryFilter<User> = hidden.length > 0 ? { _id: { $nin: hidden.map(toObjectId) } } : {}
+  if (query.search) filter.userName = new RegExp(escapeRegex(query.search), 'i')
+  const page = await userRepository.paginate<User>(filter, query, { projection: USER_PUBLIC_FIELDS })
+  return { items: await toUserSummaries(page.items, viewerId), meta: page.meta }
+}
+
+/** Admin list with private fields (email, role). */
 export const listUsers = async (query: UserQueryDto): Promise<PageResult<UserResponseDto>> => {
   const filter: QueryFilter<User> = {}
   if (query.role) filter.role = query.role
