@@ -10,6 +10,8 @@ import type { ChatMemberStatus } from '../../../interfaces/models/chat/conversat
 type ConversationSource = Conversation | HydratedDocument<Conversation>
 
 /** Read and online status stay private when the member restricted the viewer or turned them off in settings. */
+const isMutedNow = (mutedUntil: Date | null): boolean => mutedUntil !== null && mutedUntil.getTime() > Date.now()
+
 export const toChatMember = (
   member: ConversationMember,
   user: PublicUserSource,
@@ -36,7 +38,8 @@ export const toConversationResponse = (
     role: me.role,
     status: me.status,
     unreadCount: me.unreadCount,
-    isMuted: me.mutedUntil !== null && me.mutedUntil.getTime() > Date.now()
+    isMuted: isMutedNow(me.mutedUntil),
+    mutedUntil: isMutedNow(me.mutedUntil) ? me.mutedUntil!.toISOString() : null
   },
   lastMessage: conversation.lastMessage
     ? {

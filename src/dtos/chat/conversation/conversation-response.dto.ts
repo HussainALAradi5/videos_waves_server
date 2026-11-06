@@ -11,7 +11,8 @@ export interface ConversationResponseDto extends BaseEntityResponseDto {
   /** Everyone except the viewer. */
   members: ChatMemberResponseDto[]
   membersCount: number
-  me: { role: MemberRole; status: MemberStatus; unreadCount: number; isMuted: boolean }
+  /** `mutedUntil` is null when not muted; far in the future means until unmuted. */
+  me: { role: MemberRole; status: MemberStatus; unreadCount: number; isMuted: boolean; mutedUntil: string | null }
   lastMessage: { id: string; senderId: string; kind: MessageKind; preview: string; createdAt: string } | null
   lastMessageAt: string | null
 }

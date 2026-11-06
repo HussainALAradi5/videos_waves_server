@@ -71,6 +71,16 @@ describe('media endpoints', () => {
     await register(session, stored.fileId).expect(409)
   })
 
+  it('reports media already used by a video as a conflict, not a wrong kind', async () => {
+    const session = await registerUser('reuser')
+    const media = await uploadMedia(session)
+    await api().post('/videos').set(...bearer(session)).send({ mediaId: media.id, title: 'First' }).expect(201)
+    const again = await api().post('/videos').set(...bearer(session)).send({ mediaId: media.id, title: 'Second' }).expect(409)
+    expect(again.body.error.code).toBe('CONFLICT')
+    const avatar = await uploadMedia(session, { kind: 'avatar', fileName: 'me.png', contentType: 'image/png' })
+    await api().post('/videos').set(...bearer(session)).send({ mediaId: avatar.id, title: 'Not a video' }).expect(400)
+  })
+
   it('serves private files only through an unexpired signed link', async () => {
     const session = await registerUser('private')
     const media = await uploadMedia(session, {

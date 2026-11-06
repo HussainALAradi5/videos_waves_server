@@ -83,7 +83,12 @@ export const deletePendingMedia = async (mediaId: string, actor: AuthUser): Prom
 export const claimMedia = async (mediaIds: string[], kind: MediaKind, actor: AuthUser) => {
   const unique = [...new Set(mediaIds)]
   const items = await mediaRepository.findOwnedPending(unique, actor.id, kind)
-  if (items.length !== unique.length) throw badRequest(MESSAGES.MEDIA.WRONG_KIND)
+  if (items.length !== unique.length) {
+    // Tell "already used for something else" apart from "not an upload of this kind".
+    const known = await mediaRepository.findManyByIds(unique)
+    const isUsed = known.some((media) => media.status === MediaStatus.ATTACHED)
+    throw isUsed ? conflict(MESSAGES.MEDIA.ALREADY_USED) : badRequest(MESSAGES.MEDIA.WRONG_KIND)
+  }
   if ((await mediaRepository.markAttached(unique, actor.id)) !== unique.length) {
     throw conflict(MESSAGES.MEDIA.ALREADY_USED)
   }
