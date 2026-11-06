@@ -36,7 +36,7 @@ const VIDEO_POPULATE = [{ path: 'owner', select: USER_PUBLIC_FIELDS }, { path: '
  */
 export const findVideoOrFail = async (videoId: string, viewerId?: string) => {
   const video = await videoRepository.findById(videoId)
-  if (!video) throw notFound(MESSAGES.VIDEOS.NOT_FOUND)
+  if (!video || (await userRepository.isDeactivated(video.owner.toString()))) throw notFound(MESSAGES.VIDEOS.NOT_FOUND)
   if (viewerId && (await isBlockedEitherWay(video.owner.toString(), viewerId))) throw notFound(MESSAGES.VIDEOS.NOT_FOUND)
   return video
 }
@@ -45,7 +45,7 @@ const findVideoWithOwnerOrFail = async (videoId: string, viewerId?: string): Pro
   const video = await videoRepository
     .findById(videoId)
     .populate<{ owner: PublicUserSource; media: Media }>(VIDEO_POPULATE)
-  if (!video) throw notFound(MESSAGES.VIDEOS.NOT_FOUND)
+  if (!video || (await userRepository.isDeactivated(video.owner._id.toString()))) throw notFound(MESSAGES.VIDEOS.NOT_FOUND)
   if (viewerId && (await isBlockedEitherWay(video.owner._id.toString(), viewerId))) {
     throw notFound(MESSAGES.VIDEOS.NOT_FOUND)
   }

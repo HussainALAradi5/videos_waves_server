@@ -1,10 +1,20 @@
 import { Role } from '../../../enums/users/roles/role.enum'
 import { Gender } from '../../../enums/users/user/gender.enum'
 
-/** One development account per role. Passwords come from the environment or are generated. */
+/**
+ * Demo accounts, two admins and four users. Admins share SEED_ADMIN_PASSWORD and users share
+ * SEED_USER_PASSWORD; in development a missing password is generated into SEED_CREDENTIALS_FILE.
+ */
 export const SEED_USERS = [
-  { role: Role.ADMIN, userName: 'admin', email: 'admin@videos-waves.test', gender: Gender.FEMALE, passwordEnv: 'SEED_ADMIN_PASSWORD' },
-  { role: Role.USER, userName: 'viewer', email: 'viewer@videos-waves.test', gender: Gender.MALE, passwordEnv: 'SEED_USER_PASSWORD' }
+  { role: Role.ADMIN, userName: 'admin', email: 'admin@videos-waves.test', gender: Gender.FEMALE, bio: 'Keeping the waves friendly.' },
+  { role: Role.ADMIN, userName: 'moderator', email: 'moderator@videos-waves.test', gender: Gender.MALE, bio: 'Reviews reports and admin requests.' },
+  { role: Role.USER, userName: 'viewer', email: 'viewer@videos-waves.test', gender: Gender.MALE, bio: 'Short films and night lights.' },
+  { role: Role.USER, userName: 'lina', email: 'lina@videos-waves.test', gender: Gender.FEMALE, bio: 'City walks and street food.' },
+  { role: Role.USER, userName: 'omar', email: 'omar@videos-waves.test', gender: Gender.MALE, bio: 'Animation nerd.' },
+  { role: Role.USER, userName: 'maya', email: 'maya@videos-waves.test', gender: Gender.FEMALE, bio: 'Flowers, slow motion, and calm.' }
 ] as const
+
+/** Environment variable holding the shared password of each role. */
+export const SEED_PASSWORD_ENV = { admin: 'SEED_ADMIN_PASSWORD', user: 'SEED_USER_PASSWORD' } as const
 
 export const SEED_CREDENTIALS_FILE = '.seed-credentials.local.json'

@@ -7,7 +7,7 @@ import { sendPage, sendSuccess } from '../../../utilities/responses/response.uti
 import { getParams, getQuery } from '../../../utilities/requests/request.utility'
 
 export const getProfile = async (req: Request, res: Response): Promise<void> => {
-  sendSuccess(res, await profileService.getProfile(getParams<UserNameParamsDto>(req).userName, req.user?.id))
+  sendSuccess(res, await profileService.getProfile(getParams<UserNameParamsDto>(req).userName, req.user?.id, req.user?.role))
 }
 
 export const searchUsers = async (req: Request, res: Response): Promise<void> => {

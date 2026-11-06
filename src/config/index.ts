@@ -36,6 +36,8 @@ const environmentSchema = z.object({
   MEDIA_LOCAL_SECRET: optional(z.string().min(32)),
   MEDIA_LOCAL_DIR: z.string().default('storage/media'),
   UPLOAD_MAX_VIDEO_MB: z.coerce.number().int().positive().max(100).default(100),
+  /** Lets `npm run seed` run in production, for a public demo only. */
+  ALLOW_DEMO_SEED: z.stringbool().default(false),
   SEED_ADMIN_PASSWORD: optional(z.string()),
   SEED_USER_PASSWORD: optional(z.string())
 }).superRefine((value, context) => {

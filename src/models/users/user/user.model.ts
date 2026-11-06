@@ -24,6 +24,8 @@ const userSchema = new Schema<User>({
   followersCount: { type: Number, default: 0, min: 0 },
   followingCount: { type: Number, default: 0, min: 0 },
   videosCount: { type: Number, default: 0, min: 0 },
+  deactivatedAt: { type: Date, default: null, index: true },
+  deactivatedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
   tokenVersion: { type: Number, default: 0, select: false }
 })
 

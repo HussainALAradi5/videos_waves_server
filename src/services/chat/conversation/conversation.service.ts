@@ -85,7 +85,7 @@ export const getUnreadTotal = async (actor: AuthUser): Promise<{ unreadCount: nu
  */
 export const startDirect = async (dto: StartDirectDto, actor: AuthUser): Promise<ConversationResponseDto> => {
   const target = await userRepository.findByUserName(dto.userName)
-  if (!target) throw notFound(MESSAGES.USERS.NOT_FOUND)
+  if (!target || target.deactivatedAt) throw notFound(MESSAGES.USERS.NOT_FOUND)
   const targetId = target._id.toString()
   if (targetId === actor.id) throw badRequest(MESSAGES.CHAT.CANNOT_MESSAGE_SELF)
   if (await isBlockedEitherWay(actor.id, targetId)) throw forbidden(MESSAGES.CHAT.CANNOT_MESSAGE_USER)

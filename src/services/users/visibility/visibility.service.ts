@@ -4,16 +4,16 @@ import { userRepository } from '../../../repositories/users/user/user.repository
 import { notFound } from '../../../utilities/errors/app-error.utility'
 
 /**
- * Users the viewer must never see: everyone they blocked and everyone who blocked them. Every list
- * (feed, comments, followers, search, chat) excludes these ids, so a block hides both people everywhere.
+ * Users the viewer must never see: accounts an admin deactivated, everyone the viewer blocked, and
+ * everyone who blocked them. Every list (feed, comments, followers, search) excludes these ids.
  */
 export const getHiddenUserIds = async (viewerId?: string): Promise<string[]> => {
-  if (!viewerId) return []
-  const [blockedByMe, blockedMe] = await Promise.all([
-    blockRepository.findTargetIds(viewerId),
-    blockRepository.findSourceIds(viewerId)
+  const [deactivated, blockedByMe, blockedMe] = await Promise.all([
+    userRepository.findDeactivatedIds(),
+    viewerId ? blockRepository.findTargetIds(viewerId) : [],
+    viewerId ? blockRepository.findSourceIds(viewerId) : []
   ])
-  return [...new Set([...blockedByMe, ...blockedMe])]
+  return [...new Set([...deactivated, ...blockedByMe, ...blockedMe])]
 }
 
 export const isBlockedEitherWay = async (firstId: string, secondId: string): Promise<boolean> => {
@@ -27,10 +27,11 @@ export const isBlockedEitherWay = async (firstId: string, secondId: string): Pro
 /**
  * Loads a user by name for `viewerId`. A user who blocked the viewer looks like they do not exist
  * (404, as on Instagram); a user the viewer blocked stays reachable so they can be unblocked.
+ * A deactivated account is 404 too, except for admins (`canSeeDeactivated`), who reactivate it.
  */
-export const findVisibleUserOrFail = async (userName: string, viewerId?: string) => {
+export const findVisibleUserOrFail = async (userName: string, viewerId?: string, canSeeDeactivated = false) => {
   const user = await userRepository.findByUserName(userName)
-  if (!user) throw notFound(MESSAGES.USERS.NOT_FOUND)
+  if (!user || (user.deactivatedAt && !canSeeDeactivated)) throw notFound(MESSAGES.USERS.NOT_FOUND)
   if (viewerId && (await blockRepository.has(user._id.toString(), viewerId))) throw notFound(MESSAGES.USERS.NOT_FOUND)
   return user
 }

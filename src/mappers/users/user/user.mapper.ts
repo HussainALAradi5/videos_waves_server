@@ -15,6 +15,7 @@ export const toUserResponse = (user: User): UserResponseDto => ({
   followersCount: user.followersCount,
   followingCount: user.followingCount,
   videosCount: user.videosCount,
+  isActive: !user.deactivatedAt,
   createdAt: user.createdAt.toISOString()
 })
 
