@@ -46,6 +46,20 @@ export const ROUTES = {
     RESTORE: '/:commentId/restore',
     APPROVE: '/:commentId/approve'
   },
+  CHAT: {
+    BASE: '/chat',
+    UNREAD: '/unread-count',
+    CONVERSATIONS: '/conversations',
+    GROUPS: '/groups',
+    CONVERSATION: '/conversations/:conversationId',
+    ACCEPT: '/conversations/:conversationId/accept',
+    READ: '/conversations/:conversationId/read',
+    MEMBERS: '/conversations/:conversationId/members',
+    MEMBER: '/conversations/:conversationId/members/:userId',
+    MESSAGES: '/conversations/:conversationId/messages',
+    MESSAGE: '/conversations/:conversationId/messages/:messageId',
+    REACTION: '/conversations/:conversationId/messages/:messageId/reaction'
+  },
   ADMIN_REQUESTS: {
     BASE: '/admin-requests',
     ROOT: '/',

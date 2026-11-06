@@ -3,6 +3,7 @@ import { UserModel } from '../../../models/users/user/user.model'
 import type { User } from '../../../interfaces/models/users/user/user.interface'
 import { BaseRepository } from '../../base/base.repository'
 import { toObjectId } from '../../../utilities/ids/object-id.utility'
+import { USER_PUBLIC_FIELDS } from '../../../constants/users/user/user.constants'
 
 const SECRET_FIELDS = '+passwordHash +tokenVersion'
 
@@ -21,6 +22,21 @@ class UserRepository extends BaseRepository<User> {
 
   findByUserName(userName: string) {
     return this.model.findOne(this.active({ userName }))
+  }
+
+  /** Public fields of many active users in one query. */
+  findPublicByIds(ids: string[]) {
+    return this.model.find(this.active({ _id: { $in: ids.map(toObjectId) } }), USER_PUBLIC_FIELDS).lean()
+  }
+
+  async findIdsByUserName(pattern: RegExp): Promise<string[]> {
+    const rows = await this.model.find(this.active({ userName: pattern }), '_id').lean()
+    return rows.map((row) => row._id.toString())
+  }
+
+  /** Active users by name, in one query. */
+  findByUserNames(userNames: string[]) {
+    return this.model.find(this.active({ userName: { $in: userNames } }))
   }
 
   findByIdWithSecrets(id: string) {

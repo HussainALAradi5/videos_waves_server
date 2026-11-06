@@ -7,11 +7,13 @@ import { adminRequestRoutes } from './users/admin-request/admin-request.routes'
 import { videoRoutes } from './videos/video/video.routes'
 import { commentRoutes } from './videos/comment/comment.routes'
 import { mediaRoutes } from './media/media/media.routes'
+import { chatRoutes } from './chat/conversation/chat.routes'
 
 export const apiRoutes = Router()
 
 apiRoutes.get(ROUTES.HEALTH, (_req, res) => sendSuccess(res, { status: 'ok' }))
 apiRoutes.use(ROUTES.MEDIA.BASE, mediaRoutes)
+apiRoutes.use(ROUTES.CHAT.BASE, chatRoutes)
 apiRoutes.use(ROUTES.AUTH.BASE, authRoutes)
 apiRoutes.use(ROUTES.USERS.BASE, userRoutes)
 apiRoutes.use(ROUTES.ADMIN_REQUESTS.BASE, adminRequestRoutes)

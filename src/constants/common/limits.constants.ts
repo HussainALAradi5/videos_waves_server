@@ -3,7 +3,8 @@ export const BYTES_PER_MEGABYTE = 1024 * 1024
 export const PAGINATION = {
   DEFAULT_PAGE: 1,
   DEFAULT_PAGE_SIZE: 10,
-  MAX_PAGE_SIZE: 50
+  MAX_PAGE_SIZE: 50,
+  DEFAULT_CURSOR_PAGE_SIZE: 30
 } as const
 
 export const RATE_LIMITS = {

@@ -15,11 +15,15 @@ const start = async (): Promise<void> => {
   const { runSeeds } = await import('../src/seeds')
   const { runPendingMigrations } = await import('../src/services/system/migration/migration.service')
   const { createApp } = await import('../src/app')
+  const { attachRealtime } = await import('../src/config/realtime/socket.config')
+  const { createServer } = await import('http')
 
   await connectDatabase()
   await runPendingMigrations()
   await runSeeds()
-  createApp().listen(env.PORT, () => console.log(`In-memory API listening on port ${env.PORT}`))
+  const httpServer = createServer(createApp())
+  attachRealtime(httpServer)
+  httpServer.listen(env.PORT, () => console.log(`In-memory API listening on port ${env.PORT}`))
 
   const stop = async (): Promise<void> => {
     await mongo.stop()

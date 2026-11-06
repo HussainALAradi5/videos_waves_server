@@ -9,7 +9,20 @@ import type { PublicUserSource } from '../../../interfaces/models/users/user/pub
 import { restrictionRepository } from '../../../repositories/users/restriction/restriction.repository'
 import { toPublicUser } from '../../../mappers/users/user/user.mapper'
 import { badRequest } from '../../../utilities/errors/app-error.utility'
+import { MemberStatus } from '../../../enums/chat/conversation/member-status.enum'
+import { conversationRepository } from '../../../repositories/chat/conversation/conversation.repository'
+import { conversationMemberRepository } from '../../../repositories/chat/conversation-member/conversation-member.repository'
+import { buildDirectKey } from '../../../utilities/chat/conversation.utility'
+import { withTransaction } from '../../../utilities/database/transaction.utility'
 import { findVisibleUserOrFail } from '../visibility/visibility.service'
+
+/** Moves the restricter's side of an existing direct chat to requests (restrict) or back to the inbox (unrestrict). */
+const moveDirectChat = async (restricterId: string, targetId: string, status: MemberStatus): Promise<void> => {
+  const conversation = await conversationRepository.findByDirectKey(buildDirectKey(restricterId, targetId))
+  if (!conversation) return
+  const member = await conversationMemberRepository.findActive(conversation._id.toString(), restricterId)
+  if (member) await conversationMemberRepository.updateById(member._id.toString(), { $set: { status } }, restricterId)
+}
 
 const findTargetOrFail = async (userName: string, actor: AuthUser) => {
   const target = await findVisibleUserOrFail(userName, actor.id)
@@ -28,13 +41,21 @@ export const isRestrictedBy = (restricterId: string, userId: string): Promise<bo
  */
 export const restrictUser = async (userName: string, actor: AuthUser): Promise<RelationStateResponseDto> => {
   const target = await findTargetOrFail(userName, actor)
-  await restrictionRepository.addOnce(actor.id, target._id.toString())
+  const targetId = target._id.toString()
+  await withTransaction(async () => {
+    await restrictionRepository.addOnce(actor.id, targetId)
+    await moveDirectChat(actor.id, targetId, MemberStatus.REQUEST)
+  })
   return { userName: target.userName, isActive: true }
 }
 
 export const unrestrictUser = async (userName: string, actor: AuthUser): Promise<RelationStateResponseDto> => {
   const target = await findTargetOrFail(userName, actor)
-  await restrictionRepository.remove(actor.id, target._id.toString())
+  const targetId = target._id.toString()
+  await withTransaction(async () => {
+    await restrictionRepository.remove(actor.id, targetId)
+    await moveDirectChat(actor.id, targetId, MemberStatus.ACCEPTED)
+  })
   return { userName: target.userName, isActive: false }
 }
 

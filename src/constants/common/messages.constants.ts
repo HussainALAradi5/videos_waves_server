@@ -51,6 +51,27 @@ export const MESSAGES = {
     DELIVERY_SIGNATURE_INVALID: 'This link is invalid or has expired.',
     DELETED: 'Upload removed.'
   },
+  CHAT: {
+    NOT_FOUND: 'Chat not found.',
+    NOT_A_MEMBER: 'You are not in this chat.',
+    MESSAGE_NOT_FOUND: 'Message not found.',
+    MESSAGE_EMPTY: 'A message needs text, attachments, a voice note, or a shared video.',
+    VOICE_NOTE_ALONE: 'A voice note is sent on its own.',
+    CANNOT_MESSAGE_SELF: 'You cannot message yourself.',
+    CANNOT_MESSAGE_USER: 'You cannot message this account.',
+    GROUP_ONLY: 'This works only in group chats.',
+    ADMIN_REQUIRED: 'Only group admins can do this.',
+    LAST_ADMIN: 'Make someone else an admin before stepping down.',
+    GROUP_FULL: 'This group is full.',
+    ALREADY_MEMBER: 'Everyone listed is already in this group.',
+    REQUEST_PENDING: 'Accept the message request before replying.',
+    NOT_SENDER: 'Only the sender can do this.',
+    EDIT_WINDOW_PASSED: 'Messages can be edited for 15 minutes after sending.',
+    CANNOT_EDIT: 'Only text messages can be edited.',
+    ALREADY_UNSENT: 'This message was unsent.',
+    REPLY_NOT_FOUND: 'The message you are replying to is not in this chat.',
+    LEFT: 'Chat deleted.'
+  },
   COMMENTS: {
     NOT_FOUND: 'Comment not found.',
     DELETED: 'Comment deleted.',
